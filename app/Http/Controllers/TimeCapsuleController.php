@@ -21,6 +21,7 @@ class TimeCapsuleController extends Controller
                     'title'             => $capsule->title,
                     'description'       => $capsule->description,
                     'public'            => $capsule->public,
+                    'revealed'          => $capsule->revealed,
                     'reveal_date'       => $capsule->reveal_date,
                     'reveal_date_human' => $capsule->reveal_date
                         ? $capsule->reveal_date->format('Y-m-d H:i')
@@ -103,4 +104,6 @@ class TimeCapsuleController extends Controller
 
         return redirect()->route('time-capsules.index');
     }
+
+    
 }

@@ -3,7 +3,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import Countdown from '@/Components/Countdown';
 
-
 export default function Index({ auth, capsules }) {
   const { data, setData, post, processing, errors, reset } = useForm({
     title: '',
@@ -108,13 +107,19 @@ export default function Index({ auth, capsules }) {
                       className="border rounded-md px-4 py-2 flex justify-between items-center"
                     >
                       <div>
-                        <div className="font-semibold">{capsule.title}</div>
+                        <div className="flex items-center space-x-2">
+                          <div className="font-semibold">{capsule.title}</div>
+                          {capsule.revealed && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 uppercase font-semibold">
+                              Revealed
+                            </span>
+                          )}
+                        </div>
                         <div className="text-sm text-gray-500">
                           Reveals at:{' '}
                           {capsule.reveal_date_human || capsule.reveal_date}
                         </div>
                         <Countdown target={capsule.reveal_date} />
-
                       </div>
                       <div className="flex items-center space-x-3">
                         <span className="text-xs uppercase text-gray-400">
