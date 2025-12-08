@@ -9,16 +9,28 @@ use Inertia\Inertia;
 
 class TimeCapsuleController extends Controller
 {
-    // List current user's capsules
+    // Show list page via Inertia
     public function index()
     {
-    $capsules = TimeCapsule::where('user_id', Auth::id())
-        ->orderBy('reveal_date', 'asc')
-        ->get();
+        $capsules = TimeCapsule::where('user_id', Auth::id())
+            ->orderBy('reveal_date', 'asc')
+            ->get()
+            ->map(function ($capsule) {
+                return [
+                    'id'                => $capsule->id,
+                    'title'             => $capsule->title,
+                    'description'       => $capsule->description,
+                    'public'            => $capsule->public,
+                    'reveal_date'       => $capsule->reveal_date,
+                    'reveal_date_human' => $capsule->reveal_date
+                        ? $capsule->reveal_date->format('Y-m-d H:i')
+                        : null,
+                ];
+            });
 
-    return Inertia::render('Capsules/Index', [
-        'capsules' => $capsules,
-    ]);
+        return Inertia::render('Capsules/Index', [
+            'capsules' => $capsules,
+        ]);
     }
 
     // Create a new capsule
@@ -34,7 +46,7 @@ class TimeCapsuleController extends Controller
             'public'       => 'boolean',
         ]);
 
-        $capsule = TimeCapsule::create([
+        TimeCapsule::create([
             'user_id'     => Auth::id(),
             'title'       => $data['title'],
             'description' => $data['description'] ?? null,
@@ -47,7 +59,39 @@ class TimeCapsuleController extends Controller
             'visible'     => false,
         ]);
 
-        return response()->json($capsule, 201);
+        return redirect()->route('time-capsules.index');
+    }
+
+    // Show edit form
+    public function edit(TimeCapsule $timeCapsule)
+    {
+        abort_unless($timeCapsule->user_id === Auth::id(), 403);
+
+        return Inertia::render('Capsules/Edit', [
+            'capsule' => $timeCapsule,
+        ]);
+    }
+
+    // Update capsule
+    public function update(Request $request, TimeCapsule $timeCapsule)
+    {
+        abort_unless($timeCapsule->user_id === Auth::id(), 403);
+
+        $data = $request->validate([
+            'title'        => 'required|string|max:255',
+            'description'  => 'nullable|string',
+            'reveal_date'  => 'required|date',
+            'public'       => 'boolean',
+        ]);
+
+        $timeCapsule->update([
+            'title'       => $data['title'],
+            'description' => $data['description'] ?? null,
+            'reveal_date' => $data['reveal_date'],
+            'public'      => $data['public'] ?? false,
+        ]);
+
+        return redirect()->route('time-capsules.index');
     }
 
     // Delete a capsule (only owner)
@@ -57,6 +101,6 @@ class TimeCapsuleController extends Controller
 
         $timeCapsule->delete();
 
-        return response()->json(['message' => 'Deleted']);
+        return redirect()->route('time-capsules.index');
     }
 }
