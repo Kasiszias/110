@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TimeCapsuleController;
 use App\Http\Controllers\CapsuleArtifactController;
+use App\Http\Controllers\WeatherHistoryController;
+use App\Http\Controllers\NewspaperController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -44,42 +46,51 @@ Route::middleware('auth')->group(function () {
     Route::delete('/time-capsules/{timeCapsule}/artifacts/{artifact}', [CapsuleArtifactController::class, 'destroy'])
         ->name('capsules.artifacts.destroy');
 
+    // Historical events API
     Route::get('/api/history', function (\Illuminate\Http\Request $request) {
-    $month = $request->query('month');
-    $day   = $request->query('day');
+        $month = $request->query('month');
+        $day   = $request->query('day');
 
-    if (!$month || !$day) {
-        return response()->json(['error' => 'month and day are required'], 422);
-    }
+        if (! $month || ! $day) {
+            return response()->json(['error' => 'month and day are required'], 422);
+        }
 
-    $response = Http::get("https://byabbe.se/on-this-day/{$month}/{$day}/events.json");
+        $response = Http::get("https://byabbe.se/on-this-day/{$month}/{$day}/events.json");
 
-    if ($response->failed()) {
-        return response()->json(['error' => 'History API unavailable'], 502);
-    }
+        if ($response->failed()) {
+            return response()->json(['error' => 'History API unavailable'], 502);
+        }
 
-    $data = $response->json();
+        $data = $response->json();
 
-    $events = collect($data['events'] ?? [])
-        ->take(10)
-        ->map(function ($event) {
-            return [
-                'year'        => $event['year'] ?? null,
-                'description' => $event['description'] ?? null,
-                'wikipedia'   => isset($event['wikipedia'][0]['wikipedia'])
-                    ? $event['wikipedia'][0]['wikipedia']
-                    : null,
-            ];
-        })
-        ->values();
+        $events = collect($data['events'] ?? [])
+            ->take(10)
+            ->map(function ($event) {
+                return [
+                    'year'        => $event['year'] ?? null,
+                    'description' => $event['description'] ?? null,
+                    'wikipedia'   => isset($event['wikipedia'][0]['wikipedia'])
+                        ? $event['wikipedia'][0]['wikipedia']
+                        : null,
+                ];
+            })
+            ->values();
 
-    return response()->json([
-        'requested_month' => $month,
-        'requested_day'   => $day,
-        'date'            => $data['date'] ?? null,
-        'events'          => $events,
-    ]);
-})->name('api.history');
+        return response()->json([
+            'requested_month' => $month,
+            'requested_day'   => $day,
+            'date'            => $data['date'] ?? null,
+            'events'          => $events,
+        ]);
+    })->name('api.history');
+
+    // Historical weather API (city + date, Open-Meteo)
+    Route::get('/weather/history', [WeatherHistoryController::class, 'show'])
+        ->name('weather.history');
+
+    Route::get('/api/newspapers', [NewspaperController::class, 'index'])
+    ->name('api.newspapers');
+    
 });
 
 require __DIR__.'/auth.php';
