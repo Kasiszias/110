@@ -3,56 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Time Capsule Creator - Digital Archaeology</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-            background: #000;
-            color: #fff;
-        }
 
         .auth-navbar {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.95);
             padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 10000;
-            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            border-bottom: 2px solid rgba(102,126,234,0.3);
         }
-
         .navbar-brand {
             font-size: 1.5em;
             font-weight: 700;
             color: #FFD700;
             text-decoration: none;
         }
-
         .navbar-user {
             display: flex;
             align-items: center;
             gap: 20px;
         }
-
         .user-info {
             display: flex;
             align-items: center;
             gap: 10px;
             color: #E6D5B8;
         }
-
         .user-avatar {
             width: 40px;
             height: 40px;
@@ -64,9 +48,8 @@
             font-weight: 700;
             font-size: 1.2em;
         }
-
         .logout-btn {
-            background: rgba(255, 71, 87, 0.3);
+            background: rgba(255,71,87,0.3);
             border: 1px solid #ff4757;
             padding: 8px 20px;
             border-radius: 8px;
@@ -75,10 +58,90 @@
             transition: all 0.2s;
             font-size: 0.95em;
         }
-
         .logout-btn:hover {
-            background: rgba(255, 71, 87, 0.5);
-            transform: translateY(-2px);
+            background: rgba(255,71,87,0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* Loading overlay */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.spinner-large {
+    border: 5px solid rgba(255,255,255,0.1);
+    border-top: 5px solid #667eea;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Toast notification */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5);
+    z-index: 10000;
+    display: none;
+    animation: slideIn 0.3s ease;
+}
+
+.toast.success {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+.toast.active {
+    display: block;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            background: #000;
+            color: #fff;
         }
 
         /* Section 1: The Dig Site Hero */
@@ -451,67 +514,6 @@
             font-size: 3em;
             color: #E6D5B8;
             margin-bottom: 15px;
-        }
-
-        .storage-toggle {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 30px;
-            border: 2px solid rgba(255,255,255,0.2);
-        }
-
-        .storage-toggle label {
-            color: #E6D5B8;
-            font-size: 1.1em;
-            margin-right: 15px;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 30px;
-            vertical-align: middle;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #667eea;
-            transition: .4s;
-            border-radius: 30px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 22px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .toggle-slider {
-            background-color: #2ecc71;
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(30px);
         }
 
         .assembly-grid {
@@ -936,59 +938,6 @@
             margin-bottom: 20px;
         }
 
-        /* Toast notifications */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 18px 28px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-            z-index: 10000;
-            font-weight: 600;
-        }
-
-        .toast.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast.error {
-            background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
-        }
-
-        .toast.success {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-        }
-
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .loading-overlay.active {
-            display: flex;
-        }
-
-        .loading-overlay .spinner {
-            width: 60px;
-            height: 60px;
-        }
-
         /* Form Modal */
         .form-group {
             margin-bottom: 25px;
@@ -1120,7 +1069,7 @@
 </head>
 <body>
 
-    <nav class="auth-navbar">
+          <nav class="auth-navbar">
         <a href="/" class="navbar-brand">⏳ Time Capsule Creator</a>
         <div class="navbar-user">
             @auth
@@ -1132,8 +1081,6 @@
                     @csrf
                     <button type="submit" class="logout-btn">Logout</button>
                 </form>
-            @else
-                <a href="{{ route('login') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">Login</a>
             @endauth
         </div>
     </nav>
@@ -1228,11 +1175,6 @@
             <div class="assembly-header">
                 <h2>🧳 Assemble Your Time Capsule</h2>
                 <p style="color: #ccc; font-size: 1.2em;">Gather your artifacts and set a reveal date</p>
-            </div>
-
-            <div class="storage-toggle">
-                <label>💾 Storage Method:</label>
-                <span id="storageLabel" style="color: #FFD700; margin-left: 10px;">Laravel API (Backend)</span>
             </div>
 
             <div class="assembly-grid">
@@ -1350,109 +1292,332 @@
         </div>
     </div>
 
-    <script>
-        // API Configuration
-        const API_BASE_URL = 'http://localhost:8000/api';
+    // API Configuration
+const API_BASE_URL = 'http://localhost:8000/api';
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+
+// API Helper Functions
+const api = {
+    get: async (endpoint) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('API GET Error:', error);
+            throw error;
+        }
+    },
+    
+    post: async (endpoint, data) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('API POST Error:', error);
+            throw error;
+        }
+    },
+    
+    delete: async (endpoint) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('API DELETE Error:', error);
+            throw error;
+        }
+    }
+};
+
+// Toast notification helper
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast') || createToastElement();
+    toast.textContent = message;
+    toast.className = `toast ${type} active`;
+    setTimeout(() => toast.classList.remove('active'), 3000);
+}
+
+function createToastElement() {
+    const toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+    return toast;
+}
+
+// Loading overlay helpers
+function showLoading() {
+    let overlay = document.getElementById('loadingOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = '<div class="spinner-large"></div>';
+        document.body.appendChild(overlay);
+    }
+    overlay.classList.add('active');
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
+// ============================================
+// REPLACE OLD STORAGE FUNCTIONS WITH API CALLS
+// ============================================
+
+// Load historical data from YOUR Laravel APIs
+async function loadHistoricalData(year) {
+    try {
+        showLoading();
         
+        // Check your routes - adjust endpoint if needed
+        // Common endpoints: /historical/year, /events/year, /weather
+        const response = await api.get(`/events/year?year=${year}`);
+        
+        if (response.success) {
+            const eventsData = response.data;
+            
+            // Get weather data
+            const weatherResponse = await api.get(`/weather?year=${year}`);
+            
+            displayHistoricalData({
+                events: eventsData.events || [],
+                weather: weatherResponse.success ? weatherResponse.data : null
+            });
+        } else {
+            displayError();
+        }
+    } catch (error) {
+        console.error('Error loading historical data:', error);
+        displayError();
+    } finally {
+        hideLoading();
+    }
+}
+
+// Load buried capsules from Laravel backend
+async function loadBuriedCapsules() {
+    try {
+        const response = await api.get('/capsules');
+        
+        if (response.success) {
+            buriedCapsules = response.data;
+            renderBuriedCapsules();
+        } else {
+            console.error('Failed to load capsules');
+        }
+    } catch (error) {
+        console.error('Error loading capsules:', error);
+        buriedCapsules = [];
+        renderBuriedCapsules();
+    }
+}
+
+// Bury capsule - save to Laravel backend
+async function buryCapsule() {
+    const name = document.getElementById('capsuleName').value;
+    const revealDate = document.getElementById('revealDate').value;
+    const message = document.getElementById('personalMessage').value;
+    const recipients = document.getElementById('recipients').value;
+    const isPublic = document.getElementById('publicCapsule').checked;
+
+    // Validation
+    if (!name || !revealDate || !message) {
+        showToast('Please fill in capsule name, reveal date, and personal message', 'error');
+        return;
+    }
+
+    if (currentArtifacts.length === 0) {
+        showToast('Please add at least one artifact to your capsule', 'error');
+        return;
+    }
+
+    try {
+        showLoading();
+        
+        const capsuleData = {
+            name: name,
+            reveal_date: revealDate,
+            message: message,
+            artifacts: currentArtifacts,
+            recipients: recipients.split(',').map(e => e.trim()).filter(e => e),
+            is_public: isPublic
+        };
+
+        const response = await api.post('/capsules', capsuleData);
+
+        if (response.success) {
+            // Reset form
+            document.getElementById('capsuleName').value = '';
+            document.getElementById('revealDate').value = '';
+            document.getElementById('personalMessage').value = '';
+            document.getElementById('recipients').value = '';
+            document.getElementById('publicCapsule').checked = false;
+            currentArtifacts = [];
+            
+            renderArtifactLayers();
+            updateContentsPreview();
+            await loadBuriedCapsules();
+            
+            const date = new Date(revealDate).toLocaleDateString();
+            showToast(`🎉 Time capsule buried successfully! Opens on ${date}`, 'success');
+        } else {
+            showToast('Error burying capsule: ' + (response.message || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Bury capsule error:', error);
+        showToast('Error burying capsule: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// View capsule details
+async function viewCapsule(id, isUnlocked) {
+    try {
+        showLoading();
+        
+        const response = await api.get(`/capsules/${id}`);
+        
+        if (!response.success) {
+            showToast('Error loading capsule', 'error');
+            return;
+        }
+
+        const capsule = response.data;
+        const modal = document.getElementById('viewCapsuleModal');
+        const modalBody = document.getElementById('viewModalBody');
+
+        if (!isUnlocked) {
+            // Show locked view
+            modalBody.innerHTML = `
+                <div class="locked-message">
+                    <div class="lock-icon">🔒</div>
+                    <h3>Time Capsule: ${capsule.name}</h3>
+                    <div class="locked-info">
+                        <p>This capsule is still sealed and locked.</p>
+                        <p style="font-size: 1.4em; color: #667eea; margin: 20px 0;">
+                            Opens on ${new Date(capsule.reveal_date).toLocaleDateString()}
+                        </p>
+                        <p>${capsule.countdown}</p>
+                        <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                            <strong>Capsule contains:</strong><br>
+                            ${capsule.artifacts_count || 0} artifact${(capsule.artifacts_count || 0) !== 1 ? 's' : ''}<br>
+                            1 personal message
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Show unlocked view with full content
+            let artifactsHTML = '';
+            if (capsule.artifacts && capsule.artifacts.length > 0) {
+                artifactsHTML = capsule.artifacts.map(artifact => `
+                    <div class="artifact-showcase">
+                        <h4>${artifact.title} <span class="artifact-type-badge">${artifact.type}</span></h4>
+                        <div style="color: #ccc; font-size: 0.9em; margin-bottom: 10px;">
+                            📅 ${artifact.year} • 📚 ${artifact.source}
+                        </div>
+                        <div class="artifact-text">${artifact.content}</div>
+                    </div>
+                `).join('');
+            }
+
+            modalBody.innerHTML = `
+                <div class="modal-header">
+                    <h2 class="modal-title">🔓 ${capsule.name}</h2>
+                    <p style="color: #ccc;">Buried on ${new Date(capsule.created_date).toLocaleDateString()}</p>
+                </div>
+                
+                <div class="personal-message">
+                    <h3>💌 Your Message</h3>
+                    <p>${capsule.message}</p>
+                </div>
+
+                <h3 style="color: #E6D5B8; margin-bottom: 20px; font-size: 1.6em;">📦 Artifacts</h3>
+                ${artifactsHTML}
+            `;
+        }
+
+        modal.classList.add('active');
+    } catch (error) {
+        console.error('View capsule error:', error);
+        showToast('Error loading capsule', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Delete capsule
+async function deleteCapsule(id) {
+    if (!confirm('Are you sure you want to delete this time capsule? This cannot be undone.')) {
+        return;
+    }
+
+    try {
+        showLoading();
+        
+        const response = await api.delete(`/capsules/${id}`);
+        
+        if (response.success) {
+            await loadBuriedCapsules();
+            showToast('Time capsule deleted successfully', 'success');
+        } else {
+            showToast('Error deleting capsule', 'error');
+        }
+    } catch (error) {
+        console.error('Delete capsule error:', error);
+        showToast('Error deleting capsule: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+    <script>
         // Global state
         let currentYear = 2024;
         let currentArtifacts = [];
         let buriedCapsules = [];
         let historicalCache = {};
-        let useLocalStorage = false; // Default to API
-
-        // API Helper Functions
-        const api = {
-            get: async (endpoint) => {
-                try {
-                    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return await response.json();
-                } catch (error) {
-                    console.error('API GET Error:', error);
-                    throw error;
-                }
-            },
-            post: async (endpoint, data) => {
-                try {
-                    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return await response.json();
-                } catch (error) {
-                    console.error('API POST Error:', error);
-                    throw error;
-                }
-            },
-            delete: async (endpoint) => {
-                try {
-                    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return await response.json();
-                } catch (error) {
-                    console.error('API DELETE Error:', error);
-                    throw error;
-                }
-            }
-        };
-
-        // Toast notifications
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast') || createToastElement();
-            toast.textContent = message;
-            toast.className = `toast ${type} active`;
-            setTimeout(() => toast.classList.remove('active'), 3000);
-        }
-
-        function createToastElement() {
-            const toast = document.createElement('div');
-            toast.id = 'toast';
-            toast.className = 'toast';
-            document.body.appendChild(toast);
-            return toast;
-        }
-
-        // Loading overlay
-        function showLoading() {
-            let overlay = document.getElementById('loadingOverlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'loadingOverlay';
-                overlay.className = 'loading-overlay';
-                overlay.innerHTML = '<div class="spinner"></div>';
-                document.body.appendChild(overlay);
-            }
-            overlay.classList.add('active');
-        }
-
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) overlay.classList.remove('active');
-        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -1704,28 +1869,30 @@
             const isPublic = document.getElementById('publicCapsule').checked;
 
             if (!name || !revealDate || !message) {
-                showToast('Please fill in capsule name, reveal date, and personal message', 'error');
+                alert('Please fill in capsule name, reveal date, and personal message');
                 return;
             }
 
             if (currentArtifacts.length === 0) {
-                showToast('Please add at least one artifact to your capsule', 'error');
+                alert('Please add at least one artifact to your capsule');
                 return;
             }
 
-            try {
-                showLoading();
-                
-                const capsuleData = {
-                    title: name,
-                    description: message,
-                    contents: currentArtifacts,
-                    reveal_date: revealDate,
-                    recipients: recipients.split(',').map(e => e.trim()).filter(e => e),
-                    public: isPublic ? 1 : 0
-                };
+            const capsule = {
+                id: Date.now(),
+                name,
+                revealDate,
+                message,
+                artifacts: [...currentArtifacts],
+                recipients: recipients.split(',').map(e => e.trim()).filter(e => e),
+                isPublic,
+                createdDate: new Date().toISOString(),
+                buried: true
+            };
 
-                const response = await api.post('/capsules', capsuleData);
+            try {
+                await window.storage.set(`capsule:${capsule.id}`, JSON.stringify(capsule));
+                buriedCapsules.push(capsule);
                 
                 // Reset form
                 document.getElementById('capsuleName').value = '';
@@ -1737,41 +1904,37 @@
                 
                 renderArtifactLayers();
                 updateContentsPreview();
-                await loadBuriedCapsules();
+                renderBuriedCapsules();
                 
-                showToast('🎉 Time capsule buried successfully! Opens on ' + new Date(revealDate).toLocaleDateString(), 'success');
+                // Show success animation
+                alert('🎉 Time capsule buried successfully! It will reveal on ' + new Date(revealDate).toLocaleDateString());
                 
             } catch (error) {
-                console.error('Bury capsule error:', error);
-                showToast('Error burying capsule: ' + error.message, 'error');
-            } finally {
-                hideLoading();
+                alert('Error burying capsule: ' + error.message);
             }
         }
 
         // Load buried capsules
         async function loadBuriedCapsules() {
             try {
-                showLoading();
-                const capsules = await api.get('/capsules');
-                
-                // Handle different response formats
-                if (Array.isArray(capsules)) {
-                    buriedCapsules = capsules;
-                } else if (capsules.data && Array.isArray(capsules.data)) {
-                    buriedCapsules = capsules.data;
-                } else {
+                const result = await window.storage.list('capsule:');
+                if (result && result.keys) {
                     buriedCapsules = [];
+                    for (const key of result.keys) {
+                        try {
+                            const data = await window.storage.get(key);
+                            if (data && data.value) {
+                                buriedCapsules.push(JSON.parse(data.value));
+                            }
+                        } catch (err) {
+                            console.log('Key not found:', key);
+                        }
+                    }
+                    renderBuriedCapsules();
                 }
-                
-                renderBuriedCapsules();
             } catch (error) {
-                console.error('Error loading capsules:', error);
-                showToast('Failed to load capsules from API', 'error');
-                buriedCapsules = [];
+                console.log('No capsules found yet');
                 renderBuriedCapsules();
-            } finally {
-                hideLoading();
             }
         }
 
@@ -1790,35 +1953,25 @@
 
             grid.innerHTML = '';
             
-            buriedCapsules.sort((a, b) => {
-                const dateA = new Date(a.reveal_date || a.revealDate);
-                const dateB = new Date(b.reveal_date || b.revealDate);
-                return dateA - dateB;
-            }).forEach(capsule => {
-                const revealDate = capsule.reveal_date || capsule.revealDate;
-                const createdDate = capsule.created_at || capsule.createdDate;
-                const title = capsule.title || capsule.name;
-                const description = capsule.description || capsule.message;
-                const artifacts = capsule.contents || capsule.artifacts || [];
-                const artifactCount = Array.isArray(artifacts) ? artifacts.length : (typeof artifacts === 'string' ? JSON.parse(artifacts).length : 0);
-                
-                const isUnlocked = new Date() >= new Date(revealDate);
-                const countdown = getCountdown(revealDate);
+            buriedCapsules.sort((a, b) => new Date(a.revealDate) - new Date(b.revealDate)).forEach(capsule => {
+                const isUnlocked = new Date() >= new Date(capsule.revealDate);
+                const countdown = getCountdown(capsule.revealDate);
                 
                 const card = document.createElement('div');
                 card.className = `capsule-card ${isUnlocked ? 'unlocked' : 'locked'}`;
                 card.innerHTML = `
-                    <div class="capsule-name">${title}</div>
+                    <div class="capsule-name">${capsule.name}</div>
                     <div class="capsule-info">
-                        📅 Created: ${new Date(createdDate).toLocaleDateString()}<br>
-                        📦 Artifacts: ${artifactCount}<br>
-                        ${capsule.public || capsule.isPublic ? '🌐 Public<br>' : '🔒 Private<br>'}
+                        📅 Created: ${new Date(capsule.createdDate).toLocaleDateString()}<br>
+                        📦 Artifacts: ${capsule.artifacts.length}<br>
+                        ${capsule.recipients.length > 0 ? `📧 Recipients: ${capsule.recipients.length}<br>` : ''}
+                        ${capsule.isPublic ? '🌐 Public<br>' : '🔒 Private<br>'}
                     </div>
                     <span class="status-indicator ${isUnlocked ? 'unlocked' : 'locked'}">
                         ${isUnlocked ? '🔓 Unlocked' : '🔒 Locked'}
                     </span>
                     ${!isUnlocked ? `<div class="countdown-display">${countdown}</div>` : ''}
-                    <div class="capsule-info">🗓️ Opens: ${new Date(revealDate).toLocaleDateString()}</div>
+                    <div class="capsule-info">🗓️ Opens: ${new Date(capsule.revealDate).toLocaleDateString()}</div>
                     <div class="capsule-actions">
                         <button class="action-btn primary" onclick="viewCapsule(${capsule.id}, ${isUnlocked})">
                             ${isUnlocked ? '👁️ View' : '🔍 Peek'}
@@ -1854,36 +2007,21 @@
 
             const modal = document.getElementById('viewCapsuleModal');
             const modalBody = document.getElementById('viewModalBody');
-            
-            const revealDate = capsule.reveal_date || capsule.revealDate;
-            const createdDate = capsule.created_at || capsule.createdDate;
-            const title = capsule.title || capsule.name;
-            const message = capsule.description || capsule.message;
-            let artifacts = capsule.contents || capsule.artifacts || [];
-            
-            // Parse artifacts if string
-            if (typeof artifacts === 'string') {
-                try {
-                    artifacts = JSON.parse(artifacts);
-                } catch (e) {
-                    artifacts = [];
-                }
-            }
 
             if (!isUnlocked) {
                 modalBody.innerHTML = `
                     <div class="locked-message">
                         <div class="lock-icon">🔒</div>
-                        <h3>Time Capsule: ${title}</h3>
+                        <h3>Time Capsule: ${capsule.name}</h3>
                         <div class="locked-info">
                             <p>This capsule is still sealed and locked.</p>
                             <p style="font-size: 1.4em; color: #667eea; margin: 20px 0;">
-                                Opens on ${new Date(revealDate).toLocaleDateString()}
+                                Opens on ${new Date(capsule.revealDate).toLocaleDateString()}
                             </p>
-                            <p>${getCountdown(revealDate)}</p>
+                            <p>${getCountdown(capsule.revealDate)}</p>
                             <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                                 <strong>Capsule contains:</strong><br>
-                                ${artifacts.length} artifact${artifacts.length !== 1 ? 's' : ''}<br>
+                                ${capsule.artifacts.length} artifact${capsule.artifacts.length !== 1 ? 's' : ''}<br>
                                 1 personal message
                             </div>
                         </div>
@@ -1891,12 +2029,12 @@
                 `;
             } else {
                 let artifactsHTML = '';
-                artifacts.forEach(artifact => {
+                capsule.artifacts.forEach(artifact => {
                     artifactsHTML += `
                         <div class="artifact-showcase">
                             <h4>${artifact.title} <span class="artifact-type-badge">${artifact.type}</span></h4>
                             <div style="color: #ccc; font-size: 0.9em; margin-bottom: 10px;">
-                                📅 ${artifact.year} • 📚 ${artifact.source || 'User Created'}
+                                📅 ${artifact.year} • 📚 ${artifact.source}
                             </div>
                             <div class="artifact-text">${artifact.content}</div>
                         </div>
@@ -1905,13 +2043,13 @@
 
                 modalBody.innerHTML = `
                     <div class="modal-header">
-                        <h2 class="modal-title">🔓 ${title}</h2>
-                        <p style="color: #ccc;">Buried on ${new Date(createdDate).toLocaleDateString()}</p>
+                        <h2 class="modal-title">🔓 ${capsule.name}</h2>
+                        <p style="color: #ccc;">Buried on ${new Date(capsule.createdDate).toLocaleDateString()}</p>
                     </div>
                     
                     <div class="personal-message">
                         <h3>💌 Your Message</h3>
-                        <p>${message}</p>
+                        <p>${capsule.message}</p>
                     </div>
 
                     <h3 style="color: #E6D5B8; margin-bottom: 20px; font-size: 1.6em;">📦 Artifacts</h3>
@@ -1932,30 +2070,15 @@
             }
 
             try {
-                showLoading();
-                await api.delete(`/capsules/${id}`);
-                await loadBuriedCapsules();
-                showToast('Time capsule deleted successfully', 'success');
+                await window.storage.delete(`capsule:${id}`);
+                buriedCapsules = buriedCapsules.filter(c => c.id !== id);
+                renderBuriedCapsules();
             } catch (error) {
-                console.error('Delete capsule error:', error);
-                showToast('Error deleting capsule: ' + error.message, 'error');
-            } finally {
-                hideLoading();
+                alert('Error deleting capsule: ' + error.message);
             }
-        
-            label.textContent = useLocalStorage ? 'Local Storage (Claude)' : 'Laravel API (Backend)';
-            console.log(`Storage method: ${useLocalStorage ? 'Local Storage' : 'Laravel API'}`);
-            loadBuriedCapsules();
         }
 
-        // Update storage toggle on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggle = document.getElementById('storageToggle');
-            toggle.checked = !useLocalStorage;
-            loadBuriedCapsules();
-            loadHistoricalData(currentYear);
-            document.getElementById('revealDate').min = new Date().toISOString().split('T')[0];
-        });
+        // Close modals on outside click
         document.getElementById('addLayerModal').addEventListener('click', (e) => {
             if (e.target.id === 'addLayerModal') closeAddLayerModal();
         });
