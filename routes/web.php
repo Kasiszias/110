@@ -90,7 +90,16 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/api/newspapers', [NewspaperController::class, 'index'])
     ->name('api.newspapers');
-    
+
+    // Main route - show the frontend
+Route::get('/', function () {
+    return view('capsules.index');
+})->name('home');
+
+// Alternative route
+Route::get('/capsules', function () {
+        return view('app'); // ← Changed from 'index' to 'app'
+    })->name('capsules.index');
 });
 
 require __DIR__.'/auth.php';

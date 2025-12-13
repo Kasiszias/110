@@ -6,33 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
         Schema::create('time_capsules', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->string('title');
-        $table->text('description')->nullable();
-        $table->json('contents')->nullable();      // Array of artifact IDs or summary
-        $table->dateTime('bury_date')->nullable();
-        $table->dateTime('reveal_date');
-        $table->json('recipients')->nullable();    // Array of emails
-        $table->boolean('public')->default(false);
-        $table->string('access_code')->nullable(); // For private sharing
-        $table->boolean('revealed')->default(false);
-        $table->boolean('visible')->default(false);
-        $table->timestamps();
-    });
-
+            $table->id();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('title');
+            $table->text('description');
+            $table->json('contents');
+            $table->dateTime('bury_date');
+            $table->dateTime('reveal_date');
+            $table->json('recipients')->nullable();
+            $table->boolean('public')->default(false);
+            $table->boolean('revealed')->default(false);
+            $table->boolean('visible')->default(false);
+            $table->string('access_code')->nullable();
+            $table->timestamps();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('time_capsules');
     }

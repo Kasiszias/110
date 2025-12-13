@@ -6,12 +6,16 @@ use App\Models\TimeCapsule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class TimeCapsuleController extends Controller
 {
     // Show list page via Inertia
     public function index()
     {
+        $capsules = TimeCapsule::all();
+            return response()->json($capsules);
+
         $capsules = TimeCapsule::where('user_id', Auth::id())
             ->orderBy('reveal_date', 'asc')
             ->get()
@@ -35,32 +39,45 @@ class TimeCapsuleController extends Controller
     }
 
     // Create a new capsule
-    public function store(Request $request)
+   public function store(Request $request)
     {
-        $data = $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'nullable|string',
-            'reveal_date'  => 'required|date',
-            'bury_date'    => 'nullable|date',
-            'recipients'   => 'nullable|array',
-            'recipients.*' => 'email',
-            'public'       => 'boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'contents' => 'required|array',
+                'reveal_date' => 'required|date',
+                'recipients' => 'nullable|array',
+                'public' => 'nullable|boolean',
+            ]);
 
-        TimeCapsule::create([
-            'user_id'     => Auth::id(),
-            'title'       => $data['title'],
-            'description' => $data['description'] ?? null,
-            'reveal_date' => $data['reveal_date'],
-            'bury_date'   => $data['bury_date'] ?? now(),
-            'recipients'  => $data['recipients'] ?? [],
-            'public'      => $data['public'] ?? false,
-            'contents'    => [],
-            'revealed'    => false,
-            'visible'     => false,
-        ]);
+            $capsule = TimeCapsule::create([
+                'user_id' => 1,
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'contents' => json_encode($validated['contents']),
+                'bury_date' => now(),
+                'reveal_date' => $validated['reveal_date'],
+                'recipients' => isset($validated['recipients']) ? json_encode($validated['recipients']) : null,
+                'public' => $validated['public'] ?? false,
+                'revealed' => false,
+                'visible' => false,
+            ]);
 
-        return redirect()->route('time-capsules.index');
+            return response()->json($capsule, 201);
+            
+        } catch (\Exception $e) {
+            Log::error('Capsule creation error: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to create capsule',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function show(TimeCapsule $timeCapsule)
+    {
+        return response()->json($timeCapsule);
     }
 
     // Show edit form
