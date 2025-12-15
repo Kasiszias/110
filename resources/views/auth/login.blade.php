@@ -79,20 +79,27 @@
         @endif
 
         <form method="POST" action="{{ route('login') }}">
-            @csrf
-            
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="email" value="{{ old('email') }}" required autofocus placeholder="your@email.com">
-            </div>
+    @csrf
+    
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" value="{{ old('email') }}" required autofocus placeholder="your@email.com">
+    </div>
 
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" required placeholder="Enter your password">
-            </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required placeholder="Enter your password">
+    </div>
 
-            <button type="submit">Login</button>
-        </form>
+    <!-- ADD THIS SECTION -->
+    <div class="form-group" style="display: flex; align-items: center; margin-bottom: 15px;">
+        <input type="checkbox" name="remember" id="remember" style="width: auto; margin-right: 8px; transform: scale(1.2);">
+        <label for="remember" style="margin-bottom: 0; color: #ccc; font-size: 0.9em;">Remember me</label>
+    </div>
+    <!-- END OF ADDED SECTION -->
+
+    <button type="submit">Login</button>
+</form>
         
         <p class="text-center">
             Don't have an account? <a href="{{ route('register') }}">Register</a>
