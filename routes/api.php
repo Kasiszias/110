@@ -229,8 +229,9 @@ Route::get('/my-capsules', function (Request $request) {
     }
 });
 
+
 // Authenticated Capsule CRUD Operations
-Route::middleware(['web'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/capsules', [TimeCapsuleController::class, 'store']);
     Route::get('/capsules/{id}', [TimeCapsuleController::class, 'show']);
     Route::put('/capsules/{id}', [TimeCapsuleController::class, 'update']);

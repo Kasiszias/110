@@ -81,6 +81,7 @@ export default function Welcome() {
     email_recipients: [],
   });
 
+
   const [showArtifactModal, setShowArtifactModal] = useState(false);
   const [newArtifact, setNewArtifact] = useState({
     title: '',
@@ -88,6 +89,20 @@ export default function Welcome() {
     year: selectedYear,
     type: 'Personal Memory',
     file: null,
+  });
+
+
+  // Enhanced sealing states
+  const [sealingState, setSealingState] = useState({
+    isSealing: false,
+    progress: 0,
+    stage: 'idle', // idle, validating, creating, processing, uploading, completing
+    message: '',
+    error: null,
+    requestId: null,
+    timeoutMs: 300000, // 5 minutes timeout
+    retryCount: 0,
+    maxRetries: 3
   });
 
   // Refs
@@ -103,7 +118,6 @@ export default function Welcome() {
       ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-
 
 
   // Fix CSRF token handling
@@ -294,11 +308,12 @@ export default function Welcome() {
     }
   };
 
+
   const loadCapsules = async () => {
     if (!isUser) return;
     setCapsulesLoading(true);
     try {
-      const res = await axios.get('/api/capsules', {
+      const res = await axios.get('/api/my-capsules', {
         headers: { 'X-CSRF-TOKEN': csrfToken },
         withCredentials: true,
         timeout: 10000, // 10 second timeout
