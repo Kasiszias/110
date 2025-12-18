@@ -1,361 +1,2376 @@
-import { Head, Link } from '@inertiajs/react';
 
-export default function Welcome({ auth, laravelVersion, phpVersion }) {
-    const handleImageError = () => {
-        document
-            .getElementById('screenshot-container')
-            ?.classList.add('!hidden');
-        document.getElementById('docs-card')?.classList.add('!row-span-1');
-        document
-            .getElementById('docs-card-content')
-            ?.classList.add('!flex-row');
-        document.getElementById('background')?.classList.add('!hidden');
-    };
+import React, { useState, useEffect, useRef } from 'react';
+import { Head, usePage } from '@inertiajs/react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import axios from 'axios';
 
-    return (
-        <>
-            <Head title="Welcome" />
-            <div className="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
-                <img
-                    id="background"
-                    className="absolute -left-20 top-0 max-w-[877px]"
-                    src="https://laravel.com/assets/img/welcome/background.svg"
-                />
-                <div className="relative flex min-h-screen flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-                    <div className="relative w-full max-w-2xl px-6 lg:max-w-7xl">
-                        <header className="grid grid-cols-2 items-center gap-2 py-10 lg:grid-cols-3">
-                            <div className="flex lg:col-start-2 lg:justify-center">
-                                <svg
-                                    className="h-12 w-auto text-white lg:h-16 lg:text-[#FF2D20]"
-                                    viewBox="0 0 62 65"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M61.8548 14.6253C61.8778 14.7102 61.8895 14.7978 61.8897 14.8858V28.5615C61.8898 28.737 61.8434 28.9095 61.7554 29.0614C61.6675 29.2132 61.5409 29.3392 61.3887 29.4265L49.9104 36.0351V49.1337C49.9104 49.4902 49.7209 49.8192 49.4118 49.9987L25.4519 63.7916C25.3971 63.8227 25.3372 63.8427 25.2774 63.8639C25.255 63.8714 25.2338 63.8851 25.2101 63.8913C25.0426 63.9354 24.8666 63.9354 24.6991 63.8913C24.6716 63.8838 24.6467 63.8689 24.6205 63.8589C24.5657 63.8389 24.5084 63.8215 24.456 63.7916L0.501061 49.9987C0.348882 49.9113 0.222437 49.7853 0.134469 49.6334C0.0465019 49.4816 0.000120578 49.3092 0 49.1337L0 8.10652C0 8.01678 0.0124642 7.92953 0.0348998 7.84477C0.0423783 7.8161 0.0598282 7.78993 0.0697995 7.76126C0.0884958 7.70891 0.105946 7.65531 0.133367 7.6067C0.152063 7.5743 0.179485 7.54812 0.20192 7.51821C0.230588 7.47832 0.256763 7.43719 0.290416 7.40229C0.319084 7.37362 0.356476 7.35243 0.388883 7.32751C0.425029 7.29759 0.457436 7.26518 0.498568 7.2415L12.4779 0.345059C12.6296 0.257786 12.8015 0.211853 12.9765 0.211853C13.1515 0.211853 13.3234 0.257786 13.475 0.345059L25.4531 7.2415H25.4556C25.4955 7.26643 25.5292 7.29759 25.5653 7.32626C25.5977 7.35119 25.6339 7.37362 25.6625 7.40104C25.6974 7.43719 25.7224 7.47832 25.7523 7.51821C25.7735 7.54812 25.8021 7.5743 25.8196 7.6067C25.8483 7.65656 25.8645 7.70891 25.8844 7.76126C25.8944 7.78993 25.9118 7.8161 25.9193 7.84602C25.9423 7.93096 25.954 8.01853 25.9542 8.10652V33.7317L35.9355 27.9844V14.8846C35.9355 14.7973 35.948 14.7088 35.9704 14.6253C35.9792 14.5954 35.9954 14.5692 36.0053 14.5405C36.0253 14.4882 36.0427 14.4346 36.0702 14.386C36.0888 14.3536 36.1163 14.3274 36.1375 14.2975C36.1674 14.2576 36.1923 14.2165 36.2272 14.1816C36.2559 14.1529 36.292 14.1317 36.3244 14.1068C36.3618 14.0769 36.3942 14.0445 36.4341 14.0208L48.4147 7.12434C48.5663 7.03694 48.7383 6.99094 48.9133 6.99094C49.0883 6.99094 49.2602 7.03694 49.4118 7.12434L61.3899 14.0208C61.4323 14.0457 61.4647 14.0769 61.5021 14.1055C61.5333 14.1305 61.5694 14.1529 61.5981 14.1803C61.633 14.2165 61.6579 14.2576 61.6878 14.2975C61.7103 14.3274 61.7377 14.3536 61.7551 14.386C61.7838 14.4346 61.8 14.4882 61.8199 14.5405C61.8312 14.5692 61.8474 14.5954 61.8548 14.6253ZM59.893 27.9844V16.6121L55.7013 19.0252L49.9104 22.3593V33.7317L59.8942 27.9844H59.893ZM47.9149 48.5566V37.1768L42.2187 40.4299L25.953 49.7133V61.2003L47.9149 48.5566ZM1.99677 9.83281V48.5566L23.9562 61.199V49.7145L12.4841 43.2219L12.4804 43.2194L12.4754 43.2169C12.4368 43.1945 12.4044 43.1621 12.3682 43.1347C12.3371 43.1097 12.3009 43.0898 12.2735 43.0624L12.271 43.0586C12.2386 43.0275 12.2162 42.9888 12.1887 42.9539C12.1638 42.9203 12.1339 42.8916 12.114 42.8567L12.1127 42.853C12.0903 42.8156 12.0766 42.7707 12.0604 42.7283C12.0442 42.6909 12.023 42.656 12.013 42.6161C12.0005 42.5688 11.998 42.5177 11.9931 42.4691C11.9881 42.4317 11.9781 42.3943 11.9781 42.3569V15.5801L6.18848 12.2446L1.99677 9.83281ZM12.9777 2.36177L2.99764 8.10652L12.9752 13.8513L22.9541 8.10527L12.9752 2.36177H12.9777ZM18.1678 38.2138L23.9574 34.8809V9.83281L19.7657 12.2459L13.9749 15.5801V40.6281L18.1678 38.2138ZM48.9133 9.14105L38.9344 14.8858L48.9133 20.6305L58.8909 14.8846L48.9133 9.14105ZM47.9149 22.3593L42.124 19.0252L37.9323 16.6121V27.9844L43.7219 31.3174L47.9149 33.7317V22.3593ZM24.9533 47.987L39.59 39.631L46.9065 35.4555L36.9352 29.7145L25.4544 36.3242L14.9907 42.3482L24.9533 47.987Z"
-                                        fill="currentColor"
-                                    />
-                                </svg>
-                            </div>
-                            <nav className="-mx-3 flex flex-1 justify-end">
-                                {auth.user ? (
-                                    <Link
-                                        href={route('dashboard')}
-                                        className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                                    >
-                                        Dashboard
-                                    </Link>
-                                ) : (
-                                    <>
-                                        <Link
-                                            href={route('login')}
-                                            className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                                        >
-                                            Log in
-                                        </Link>
-                                        <Link
-                                            href={route('register')}
-                                            className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                                        >
-                                            Register
-                                        </Link>
-                                    </>
-                                )}
-                            </nav>
-                        </header>
+import EconomicDataLoader from '@/Components/EconomicDataLoader';
+import WeatherSidebar from '@/Components/WeatherSidebar';
+import SplineBackground from '@/Components/SplineBackground';
+import FloatingParticles from '@/Components/FloatingParticles';
+import InteractiveSidebar from '@/Components/InteractiveSidebar';
+import AnimatedText, { FadeInUp, SlideInLeft, SlideInRight } from '@/Components/AnimatedText';
 
-                        <main className="mt-6">
-                            <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-                                <a
-                                    href="https://laravel.com/docs"
-                                    id="docs-card"
-                                    className="flex flex-col items-start gap-6 overflow-hidden rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] md:row-span-3 lg:p-10 lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div
-                                        id="screenshot-container"
-                                        className="relative flex w-full flex-1 items-stretch"
-                                    >
-                                        <img
-                                            src="https://laravel.com/assets/img/welcome/docs-light.svg"
-                                            alt="Laravel documentation screenshot"
-                                            className="aspect-video h-full w-full flex-1 rounded-[10px] object-cover object-top drop-shadow-[0px_4px_34px_rgba(0,0,0,0.06)] dark:hidden"
-                                            onError={handleImageError}
-                                        />
-                                        <img
-                                            src="https://laravel.com/assets/img/welcome/docs-dark.svg"
-                                            alt="Laravel documentation screenshot"
-                                            className="hidden aspect-video h-full w-full flex-1 rounded-[10px] object-cover object-top drop-shadow-[0px_4px_34px_rgba(0,0,0,0.25)] dark:block"
-                                        />
-                                        <div className="absolute -bottom-16 -left-16 h-40 w-[calc(100%+8rem)] bg-gradient-to-b from-transparent via-white to-white dark:via-zinc-900 dark:to-zinc-900"></div>
-                                    </div>
+import { Calendar, Clock, Cloud, DollarSign, FileUp, History, Home, Lock, LogOut, Menu, Newspaper, Plus, Shield, Trash2, Upload, User, X, Sparkles, Zap, Star, ArrowRight, Archive, Package, ArchiveRestore, Minimize2, Maximize2, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
-                                    <div className="relative flex items-center gap-6 lg:items-end">
-                                        <div
-                                            id="docs-card-content"
-                                            className="flex items-start gap-6 lg:flex-col"
-                                        >
-                                            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                                <svg
-                                                    className="size-5 sm:size-6"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        fill="#FF2D20"
-                                                        d="M23 4a1 1 0 0 0-1.447-.894L12.224 7.77a.5.5 0 0 1-.448 0L2.447 3.106A1 1 0 0 0 1 4v13.382a1.99 1.99 0 0 0 1.105 1.79l9.448 4.728c.14.065.293.1.447.1.154-.005.306-.04.447-.105l9.453-4.724a1.99 1.99 0 0 0 1.1-1.789V4ZM3 6.023a.25.25 0 0 1 .362-.223l7.5 3.75a.251.251 0 0 1 .138.223v11.2a.25.25 0 0 1-.362.224l-7.5-3.75a.25.25 0 0 1-.138-.22V6.023Zm18 11.2a.25.25 0 0 1-.138.224l-7.5 3.75a.249.249 0 0 1-.329-.099.249.249 0 0 1-.033-.12V9.772a.251.251 0 0 1 .138-.224l7.5-3.75a.25.25 0 0 1 .362.224v11.2Z"
-                                                    />
-                                                    <path
-                                                        fill="#FF2D20"
-                                                        d="m3.55 1.893 8 4.048a1.008 1.008 0 0 0 .9 0l8-4.048a1 1 0 0 0-.9-1.785l-7.322 3.706a.506.506 0 0 1-.452 0L4.454.108a1 1 0 0 0-.9 1.785H3.55Z"
-                                                    />
-                                                </svg>
-                                            </div>
 
-                                            <div className="pt-3 sm:pt-5 lg:pt-0">
-                                                <h2 className="text-xl font-semibold text-black dark:text-white">
-                                                    Documentation
-                                                </h2>
+export default function Welcome() {
+  const page = usePage();
+  const auth = page.props.auth || {};
+  const user = auth.user || null;
+  const isUser = !!user;
 
-                                                <p className="mt-4 text-sm/relaxed">
-                                                    Laravel has wonderful
-                                                    documentation covering every
-                                                    aspect of the framework.
-                                                    Whether you are a newcomer
-                                                    or have prior experience
-                                                    with Laravel, we recommend
-                                                    reading our documentation
-                                                    from beginning to end.
-                                                </p>
-                                            </div>
-                                        </div>
 
-                                        <svg
-                                            className="size-6 shrink-0 stroke-[#FF2D20]"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth="1.5"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                            />
-                                        </svg>
-                                    </div>
-                                </a>
 
-                                <a
-                                    href="https://laracasts.com"
-                                    className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M24 8.25a.5.5 0 0 0-.5-.5H.5a.5.5 0 0 0-.5.5v12a2.5 2.5 0 0 0 2.5 2.5h19a2.5 2.5 0 0 0 2.5-2.5v-12Zm-7.765 5.868a1.221 1.221 0 0 1 0 2.264l-6.626 2.776A1.153 1.153 0 0 1 8 18.123v-5.746a1.151 1.151 0 0 1 1.609-1.035l6.626 2.776ZM19.564 1.677a.25.25 0 0 0-.177-.427H15.6a.106.106 0 0 0-.072.03l-4.54 4.543a.25.25 0 0 0 .177.427h3.783c.027 0 .054-.01.073-.03l4.543-4.543ZM22.071 1.318a.047.047 0 0 0-.045.013l-4.492 4.492a.249.249 0 0 0 .038.385.25.25 0 0 0 .14.042h5.784a.5.5 0 0 0 .5-.5v-2a2.5 2.5 0 0 0-1.925-2.432ZM13.014 1.677a.25.25 0 0 0-.178-.427H9.101a.106.106 0 0 0-.073.03l-4.54 4.543a.25.25 0 0 0 .177.427H8.4a.106.106 0 0 0 .073-.03l4.54-4.543ZM6.513 1.677a.25.25 0 0 0-.177-.427H2.5A2.5 2.5 0 0 0 0 3.75v2a.5.5 0 0 0 .5.5h1.4a.106.106 0 0 0 .073-.03l4.54-4.543Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
 
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Laracasts
-                                        </h2>
+  // Enhanced scroll animations - simplified for better performance
+  const { scrollYProgress } = useScroll();
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
+  
+  // Scroll-based icon change state
+  const [currentIcon, setCurrentIcon] = useState(History);
+  const scrollProgress = useTransform(scrollYProgress, [0, 0.25, 0.5, 0.75, 1], [0, 1, 2, 3, 4]);
+  
+  // Map scroll progress to different icons
+  useEffect(() => {
+    const unsubscribe = scrollProgress.on('change', (value) => {
+      const icons = [History, Package, Archive, Shield, ArchiveRestore];
+      const index = Math.floor(value) % icons.length;
+      setCurrentIcon(icons[index]);
+    });
+    
+    return () => unsubscribe();
+  }, [scrollProgress]);
+  
 
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laracasts offers thousands of video
-                                            tutorials on Laravel, PHP, and
-                                            JavaScript development. Check them
-                                            out, see for yourself, and massively
-                                            level up your development skills in
-                                            the process.
-                                        </p>
-                                    </div>
+  // Auth forms state
+  const [loginForm, setLoginForm] = useState({ email: '', password: '', remember: false });
+  const [registerForm, setRegisterForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+  });
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [loginError, setLoginError] = useState(null);
+  const [registerError, setRegisterError] = useState(null);
 
-                                    <svg
-                                        className="size-6 shrink-0 self-center stroke-[#FF2D20]"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth="1.5"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                        />
-                                    </svg>
-                                </a>
 
-                                <a
-                                    href="https://laravel-news.com"
-                                    className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M8.75 4.5H5.5c-.69 0-1.25.56-1.25 1.25v4.75c0 .69.56 1.25 1.25 1.25h3.25c.69 0 1.25-.56 1.25-1.25V5.75c0-.69-.56-1.25-1.25-1.25Z" />
-                                                <path d="M24 10a3 3 0 0 0-3-3h-2V2.5a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2V20a3.5 3.5 0 0 0 3.5 3.5h17A3.5 3.5 0 0 0 24 20V10ZM3.5 21.5A1.5 1.5 0 0 1 2 20V3a.5.5 0 0 1 .5-.5h14a.5.5 0 0 1 .5.5v17c0 .295.037.588.11.874a.5.5 0 0 1-.484.625L3.5 21.5ZM22 20a1.5 1.5 0 1 1-3 0V9.5a.5.5 0 0 1 .5-.5H21a1 1 0 0 1 1 1v10Z" />
-                                                <path d="M12.751 6.047h2a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-2A.75.75 0 0 1 12 7.3v-.5a.75.75 0 0 1 .751-.753ZM12.751 10.047h2a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-2A.75.75 0 0 1 12 11.3v-.5a.75.75 0 0 1 .751-.753ZM4.751 14.047h10a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-10A.75.75 0 0 1 4 15.3v-.5a.75.75 0 0 1 .751-.753ZM4.75 18.047h7.5a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-7.5A.75.75 0 0 1 4 19.3v-.5a.75.75 0 0 1 .75-.753Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
+  // App state
 
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Laravel News
-                                        </h2>
+  const [selectedYear, setSelectedYear] = useState(2024);
+  const [customYear, setCustomYear] = useState('');
+  const [showCustomYearInput, setShowCustomYearInput] = useState(false);
+  const [historicalData, setHistoricalData] = useState({ events: [], news: [] });
+  const [dataLoading, setDataLoading] = useState(false);
+  const [artifacts, setArtifacts] = useState([]);
+  const [capsules, setCapsules] = useState([]);
+  const [capsulesLoading, setCapsulesLoading] = useState(false);
 
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laravel News is a community driven
-                                            portal and newsletter aggregating
-                                            all of the latest and most important
-                                            news in the Laravel ecosystem,
-                                            including new package releases and
-                                            tutorials.
-                                        </p>
-                                    </div>
+  // Popup states for circular buttons
+  const [timePeriodPopup, setTimePeriodPopup] = useState(false);
+  const [artifactVaultPopup, setArtifactVaultPopup] = useState(false);
+  const [historicalLibraryPopup, setHistoricalLibraryPopup] = useState(false);
 
-                                    <svg
-                                        className="size-6 shrink-0 self-center stroke-[#FF2D20]"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth="1.5"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                        />
-                                    </svg>
-                                </a>
+  const [capsuleForm, setCapsuleForm] = useState({
+    name: '',
+    description: '',
+    reveal_date: '',
+    message: '',
+    email_recipients: [],
+  });
 
-                                <div className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800">
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M16.597 12.635a.247.247 0 0 0-.08-.237 2.234 2.234 0 0 1-.769-1.68c.001-.195.03-.39.084-.578a.25.25 0 0 0-.09-.267 8.8 8.8 0 0 0-4.826-1.66.25.25 0 0 0-.268.181 2.5 2.5 0 0 1-2.4 1.824.045.045 0 0 0-.045.037 12.255 12.255 0 0 0-.093 3.86.251.251 0 0 0 .208.214c2.22.366 4.367 1.08 6.362 2.118a.252.252 0 0 0 .32-.079 10.09 10.09 0 0 0 1.597-3.733ZM13.616 17.968a.25.25 0 0 0-.063-.407A19.697 19.697 0 0 0 8.91 15.98a.25.25 0 0 0-.287.325c.151.455.334.898.548 1.328.437.827.981 1.594 1.619 2.28a.249.249 0 0 0 .32.044 29.13 29.13 0 0 0 2.506-1.99ZM6.303 14.105a.25.25 0 0 0 .265-.274 13.048 13.048 0 0 1 .205-4.045.062.062 0 0 0-.022-.07 2.5 2.5 0 0 1-.777-.982.25.25 0 0 0-.271-.149 11 11 0 0 0-5.6 2.815.255.255 0 0 0-.075.163c-.008.135-.02.27-.02.406.002.8.084 1.598.246 2.381a.25.25 0 0 0 .303.193 19.924 19.924 0 0 1 5.746-.438ZM9.228 20.914a.25.25 0 0 0 .1-.393 11.53 11.53 0 0 1-1.5-2.22 12.238 12.238 0 0 1-.91-2.465.248.248 0 0 0-.22-.187 18.876 18.876 0 0 0-5.69.33.249.249 0 0 0-.179.336c.838 2.142 2.272 4 4.132 5.353a.254.254 0 0 0 .15.048c1.41-.01 2.807-.282 4.117-.802ZM18.93 12.957l-.005-.008a.25.25 0 0 0-.268-.082 2.21 2.21 0 0 1-.41.081.25.25 0 0 0-.217.2c-.582 2.66-2.127 5.35-5.75 7.843a.248.248 0 0 0-.09.299.25.25 0 0 0 .065.091 28.703 28.703 0 0 0 2.662 2.12.246.246 0 0 0 .209.037c2.579-.701 4.85-2.242 6.456-4.378a.25.25 0 0 0 .048-.189 13.51 13.51 0 0 0-2.7-6.014ZM5.702 7.058a.254.254 0 0 0 .2-.165A2.488 2.488 0 0 1 7.98 5.245a.093.093 0 0 0 .078-.062 19.734 19.734 0 0 1 3.055-4.74.25.25 0 0 0-.21-.41 12.009 12.009 0 0 0-10.4 8.558.25.25 0 0 0 .373.281 12.912 12.912 0 0 1 4.826-1.814ZM10.773 22.052a.25.25 0 0 0-.28-.046c-.758.356-1.55.635-2.365.833a.25.25 0 0 0-.022.48c1.252.43 2.568.65 3.893.65.1 0 .2 0 .3-.008a.25.25 0 0 0 .147-.444c-.526-.424-1.1-.917-1.673-1.465ZM18.744 8.436a.249.249 0 0 0 .15.228 2.246 2.246 0 0 1 1.352 2.054c0 .337-.08.67-.23.972a.25.25 0 0 0 .042.28l.007.009a15.016 15.016 0 0 1 2.52 4.6.25.25 0 0 0 .37.132.25.25 0 0 0 .096-.114c.623-1.464.944-3.039.945-4.63a12.005 12.005 0 0 0-5.78-10.258.25.25 0 0 0-.373.274c.547 2.109.85 4.274.901 6.453ZM9.61 5.38a.25.25 0 0 0 .08.31c.34.24.616.561.8.935a.25.25 0 0 0 .3.127.631.631 0 0 1 .206-.034c2.054.078 4.036.772 5.69 1.991a.251.251 0 0 0 .267.024c.046-.024.093-.047.141-.067a.25.25 0 0 0 .151-.23A29.98 29.98 0 0 0 15.957.764a.25.25 0 0 0-.16-.164 11.924 11.924 0 0 0-2.21-.518.252.252 0 0 0-.215.076A22.456 22.456 0 0 0 9.61 5.38Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
+  const [showArtifactModal, setShowArtifactModal] = useState(false);
+  const [newArtifact, setNewArtifact] = useState({
+    title: '',
+    description: '',
+    year: selectedYear,
+    type: 'Personal Memory',
+    file: null,
+  });
 
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Vibrant Ecosystem
-                                        </h2>
+  // Refs
+  const heroRef = useRef(null);
+  const loginRef = useRef(null);
+  const registerRef = useRef(null);
+  const mainAppRef = useRef(null);
+  const assembleRef = useRef(null);
+  const vaultRef = useRef(null);
 
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laravel's robust library of
-                                            first-party tools and libraries,
-                                            such as{' '}
-                                            <a
-                                                href="https://forge.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white dark:focus-visible:ring-[#FF2D20]"
-                                            >
-                                                Forge
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://vapor.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Vapor
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://nova.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Nova
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://envoyer.io"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Envoyer
-                                            </a>
-                                            , and{' '}
-                                            <a
-                                                href="https://herd.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Herd
-                                            </a>{' '}
-                                            help you take your projects to the
-                                            next level. Pair them with powerful
-                                            open source libraries like{' '}
-                                            <a
-                                                href="https://laravel.com/docs/billing"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Cashier
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/dusk"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Dusk
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/broadcasting"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Echo
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/horizon"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Horizon
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/sanctum"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Sanctum
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/telescope"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Telescope
-                                            </a>
-                                            , and more.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </main>
+  const scroll = (ref) => {
+    if (ref?.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
-                        <footer className="py-16 text-center text-sm text-black dark:text-white/70">
-                            Laravel v{laravelVersion} (PHP v{phpVersion})
-                        </footer>
-                    </div>
-                </div>
+
+
+  // Fix CSRF token handling
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || window.csrf_token;
+  
+  // Configure axios defaults for Laravel
+  useEffect(() => {
+    if (csrfToken) {
+      axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+      axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }
+    axios.defaults.withCredentials = true;
+  }, [csrfToken]);
+
+  // AUTH HANDLERS
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError(null);
+
+    try {
+      await axios.post(route('login'), loginForm, {
+
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        withCredentials: true,
+      });
+      setLoginForm({ email: '', password: '', remember: false });
+      setTimeout(() => (window.location.href = '/'), 400);
+    } catch (error) {
+      const message =
+        error.response?.data?.message || 'Login failed. Please check your credentials.';
+      setLoginError(message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setRegisterLoading(true);
+    setRegisterError(null);
+
+    if (registerForm.password !== registerForm.password_confirmation) {
+      setRegisterError('Passwords do not match');
+      setRegisterLoading(false);
+      return;
+    }
+
+    if (registerForm.password.length < 8) {
+      setRegisterError('Password must be at least 8 characters');
+      setRegisterLoading(false);
+      return;
+    }
+
+    try {
+      await axios.post(route('register'), registerForm, {
+
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        withCredentials: true,
+      });
+      setRegisterForm({ name: '', email: '', password: '', password_confirmation: '' });
+      setTimeout(() => (window.location.href = '/'), 400);
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.errors?.email?.[0] ||
+        'Registration failed. Email may already be in use.';
+      setRegisterError(message);
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        route('logout'),
+        {},
+        {
+          headers: { 'X-CSRF-TOKEN': csrfToken },
+          withCredentials: true,
+        }
+      );
+      window.location.href = '/';
+    } catch (e) {
+      console.error('Logout error', e);
+    }
+  };
+
+
+
+
+  // DATA LOADERS - Enhanced with better error handling and proper fallbacks
+  const loadHistoricalData = async () => {
+    if (dataLoading) return;
+    setDataLoading(true);
+
+    try {
+      const [eventsRes, newsRes] = await Promise.all([
+        axios.get(`/api/history?year=${selectedYear}`, {
+          headers: { 'X-CSRF-TOKEN': csrfToken }
+        }).catch((error) => {
+          console.warn('Events API error:', error.response?.status);
+          // Return proper fallback structure
+          return {
+            data: {
+              events: [
+                {
+                  year: selectedYear,
+                  text: `Historical events for ${selectedYear} could not be loaded. This might be due to API limitations or network issues.`
+                }
+              ]
+            },
+            status: error.response?.status || 422
+          };
+        }),
+        axios.get(`/api/newspapers?year=${selectedYear}`, {
+          headers: { 'X-CSRF-TOKEN': csrfToken }
+        }).catch((error) => {
+          console.warn('News API error:', error.response?.status);
+          // Return proper fallback structure
+          return {
+            data: {
+              articles: [
+                {
+                  title: `News headlines for ${selectedYear} could not be loaded`,
+                  description: 'This might be due to API limitations or network issues. You can still add your own memories and artifacts.',
+                  source: 'System',
+                  thumbnail: null
+                }
+              ]
+            },
+            status: error.response?.status || 422
+          };
+        }),
+      ]);
+
+      // Validate response structure with better fallbacks
+      const events = eventsRes.data?.events || [];
+      const news = newsRes.data?.articles || newsRes.data?.news || [];
+
+      // Ensure we have proper array structures
+      const validatedEvents = Array.isArray(events) ? events : [];
+      const validatedNews = Array.isArray(news) ? news : [];
+
+      // If both APIs failed and we have empty arrays, provide helpful fallback content
+      const finalEvents = validatedEvents.length === 0 ? [
+        {
+          year: selectedYear,
+          text: `No historical events available for ${selectedYear}. You can still create your own time capsule with personal memories.`
+        }
+      ] : validatedEvents;
+
+      const finalNews = validatedNews.length === 0 ? [
+        {
+          title: `No news headlines available for ${selectedYear}`,
+          description: 'Historical news data may not be available for this year, but you can add your own stories and memories.',
+          source: 'System',
+          thumbnail: null
+        }
+      ] : validatedNews;
+
+      setHistoricalData({
+        events: finalEvents,
+        news: finalNews,
+      });
+    } catch (e) {
+      console.error('History load error', e);
+      // Provide comprehensive fallback data
+      setHistoricalData({
+        events: [
+          {
+            year: selectedYear,
+            text: `Unable to load historical events for ${selectedYear}. Please check your connection and try again.`
+          }
+        ],
+        news: [
+          {
+            title: 'News data unavailable',
+            description: 'Unable to load news headlines. You can still create your time capsule with personal artifacts.',
+            source: 'System',
+            thumbnail: null
+          }
+        ]
+      });
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  const loadCapsules = async () => {
+    if (!isUser) return;
+    setCapsulesLoading(true);
+    try {
+      const res = await axios.get('/api/capsules', {
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        withCredentials: true,
+        timeout: 10000, // 10 second timeout
+      });
+
+      // Validate response structure
+      const capsulesData = res.data?.capsules || res.data || [];
+      const validatedCapsules = Array.isArray(capsulesData) ? capsulesData : [];
+
+      setCapsules(validatedCapsules);
+    } catch (e) {
+      console.error('Capsules load error', e);
+
+      let errorMessage = 'Failed to load capsules';
+
+      if (e.response) {
+        const status = e.response.status;
+        switch (status) {
+          case 401:
+            errorMessage = 'Authentication required. Please log in again.';
+            break;
+          case 403:
+            errorMessage = 'You do not have permission to view capsules.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = `Failed to load capsules (${status})`;
+        }
+      } else if (e.code === 'ECONNABORTED') {
+        errorMessage = 'Request timed out. Please check your connection.';
+      }
+
+      // Show error but don't break the UI - set empty array as fallback
+      console.warn(errorMessage);
+      setCapsules([]);
+    } finally {
+      setCapsulesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isUser) {
+      loadHistoricalData();
+      loadCapsules();
+    }
+  }, [selectedYear, isUser]);
+
+  // ARTIFACT HELPERS
+  const addArtifact = (item) => {
+    setArtifacts((prev) => [...prev, { ...item, id: Date.now() + Math.random() }]);
+  };
+
+  const removeArtifact = (id) => {
+    setArtifacts((prev) => prev.filter((a) => a.id !== id));
+  };
+
+
+  // CAPSULE HANDLERS with file upload - ENHANCED VERSION with better error handling
+  const sealCapsule = async () => {
+    if (!capsuleForm.name || !capsuleForm.reveal_date) {
+      alert('Error: Please fill in capsule name and reveal date');
+      return;
+    }
+
+    if (artifacts.length === 0) {
+      alert('Error: Add at least one artifact to the capsule');
+      return;
+    }
+
+    // Validate reveal date is in the future
+    const revealDate = new Date(capsuleForm.reveal_date);
+    const now = new Date();
+    if (revealDate <= now) {
+      alert('Error: Reveal date must be in the future');
+      return;
+    }
+
+    const formData = new FormData();
+
+    // Basic capsule data
+    formData.append('title', capsuleForm.name.trim());
+    formData.append('description', capsuleForm.description?.trim() || '');
+    formData.append('reveal_date', capsuleForm.reveal_date);
+    formData.append('message', capsuleForm.message?.trim() || '');
+
+    // Add email recipients if provided
+    if (capsuleForm.email_recipients && capsuleForm.email_recipients.length > 0) {
+      const validEmails = capsuleForm.email_recipients.filter(email =>
+        email && email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+      );
+      if (validEmails.length > 0) {
+        formData.append('email_recipients', JSON.stringify(validEmails));
+      }
+    }
+
+    // Process artifacts with better validation
+    artifacts.forEach((artifact, index) => {
+      const title = artifact.title?.trim() || `Artifact ${index + 1}`;
+      const description = artifact.description?.trim() || artifact.text?.trim() || '';
+      const year = artifact.year || selectedYear;
+      const type = artifact.type || 'Personal Memory';
+
+      formData.append(`artifacts[${index}][title]`, title);
+      formData.append(`artifacts[${index}][description]`, description);
+      formData.append(`artifacts[${index}][year]`, year.toString());
+      formData.append(`artifacts[${index}][type]`, type);
+
+      // Handle file uploads
+      if (artifact.file) {
+        formData.append(`artifacts[${index}][file]`, artifact.file);
+      }
+    });
+
+    try {
+      console.log('Attempting to seal capsule...', {
+        name: capsuleForm.name,
+        reveal_date: capsuleForm.reveal_date,
+        artifacts_count: artifacts.length,
+        has_files: artifacts.some(a => a.file)
+      });
+
+      const res = await axios.post('/api/capsules', formData, {
+        headers: {
+          'X-CSRF-TOKEN': csrfToken,
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true,
+        timeout: 30000, // 30 second timeout for file uploads
+      });
+
+      console.log('Capsule creation response:', res.data);
+
+      // Improved success detection
+      const isSuccess = res.status === 201 ||
+                       res.status === 200 ||
+                       (res.data && (res.data.success === true || res.data.success === 'true')) ||
+                       (res.data && res.data.id) ||
+                       (res.data && res.data.capsule);
+
+      if (isSuccess) {
+        const successMessage = `Capsule "${capsuleForm.name}" sealed successfully! Your time capsule is now locked and will be revealed on ${new Date(capsuleForm.reveal_date).toLocaleDateString()}.`;
+        alert(successMessage);
+
+        // Reset form state
+        setCapsuleForm({
+          name: '',
+          description: '',
+          reveal_date: '',
+          message: '',
+          email_recipients: []
+        });
+        setArtifacts([]);
+
+        // Reload capsules and navigate to vault
+        await loadCapsules();
+        if (vaultRef.current) {
+          scroll(vaultRef);
+        }
+      } else {
+        // More specific error handling
+        const errorMsg = res.data?.message ||
+                        res.data?.error ||
+                        'Capsule creation failed. Please check your data and try again.';
+        throw new Error(errorMsg);
+      }
+    } catch (e) {
+      console.error('Capsule creation error:', e);
+
+      let errorMessage = 'Failed to create capsule';
+
+      if (e.response) {
+        // Server responded with error status
+        const status = e.response.status;
+        const data = e.response.data;
+
+        switch (status) {
+          case 400:
+            errorMessage = data?.message || 'Invalid capsule data provided';
+            break;
+          case 401:
+            errorMessage = 'Authentication required. Please log in again.';
+            break;
+          case 403:
+            errorMessage = 'You do not have permission to create capsules.';
+            break;
+          case 413:
+            errorMessage = 'Files are too large. Please reduce file sizes or remove some files.';
+            break;
+          case 422:
+            // Validation errors
+            if (data?.errors) {
+              const errors = Object.values(data.errors).flat();
+              errorMessage = errors.join('. ');
+            } else {
+              errorMessage = data?.message || 'Validation failed. Please check your input.';
+            }
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = data?.message || `Server error (${status})`;
+        }
+      } else if (e.code === 'ECONNABORTED') {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+
+      alert('Error: ' + errorMessage);
+    }
+  };
+
+  const deleteCapsule = async (id) => {
+    if (!confirm('Are you sure you want to delete this capsule? This action cannot be undone.')) return;
+    try {
+      await axios.delete(`/api/capsules/${id}`, {
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        withCredentials: true,
+      });
+      setCapsules(prev => prev.filter(capsule => capsule.id !== id));
+    } catch (e) {
+      alert('Error deleting capsule: ' + (e.response?.data?.message || e.message));
+    }
+  };
+
+  // UI helpers
+  const timePeriods = [
+    { year: 2024, label: '2024 - Present' },
+    { year: 2020, label: '2020 - Pandemic' },
+    { year: 2010, label: '2010 - Social Media' },
+    { year: 2000, label: '2000 - Millennium' },
+    { year: 1990, label: '1990 - Digital Age' },
+    { year: 1980, label: '1980 - Cold War' },
+    { year: 1970, label: '1970 - Disco Era' },
+    { year: 1960, label: '1960 - Space Race' },
+    { year: 1950, label: '1950 - Post-War' },
+    { year: 1945, label: '1945 - WWII End' },
+  ];
+
+  const agingOpacity = (year) => {
+    const age = new Date().getFullYear() - (year || selectedYear);
+    return Math.min(1, 0.5 + age * 0.01);
+  };
+
+  // File upload handler for artifact modal
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+      
+      // Check file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'application/pdf', 'text/plain'];
+      if (!validTypes.includes(file.type)) {
+        alert('Please upload a valid file type (JPEG, PNG, GIF, MP4, PDF, TXT)');
+        return;
+      }
+      
+      setNewArtifact(prev => ({ ...prev, file }));
+    }
+  };
+
+
+
+  return (
+    <>
+
+
+      <Head title="Vault - Unearth the past" />
+
+
+
+
+
+      {/* Enhanced 3D Spline Background */}
+      <SplineBackground />
+      
+      {/* Minimal Floating Particles only */}
+      <FloatingParticles count={8} theme="time-capsule" />
+      
+      {/* Dynamic scroll progress indicator */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-50 origin-left"
+        style={{ scaleX: scrollYProgress }}
+      />
+
+      {/* Main scroll container */}
+      <div className="relative z-10">
+        <style>{`
+          html { scroll-behavior: smooth; }
+          body {
+            background: #0f0d0a;
+            color: #f5f1ed;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+          }
+
+          /* Professional 3-Color Gradient System */
+          .gradient-text {
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 50%, #8B5CF6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% 200%;
+            animation: gradient-shift 4s ease-in-out infinite;
+          }
+
+          @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+          }
+
+          .glass-effect {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+          }
+
+          .panel-gradient {
+            background: linear-gradient(135deg, rgba(88, 28, 135, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
+            border: 1px solid rgba(88, 28, 135, 0.3);
+          }
+
+          .button-primary {
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+            color: white;
+            padding: 0.875rem 2.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+          }
+
+          .button-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+          }
+
+          .button-primary:hover::before {
+            left: 100%;
+          }
+
+          .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4);
+          }
+
+          .button-outline {
+            background: transparent;
+            color: #8B5CF6;
+            padding: 0.875rem 2.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #8B5CF6;
+            cursor: pointer;
+          }
+
+          .button-outline:hover {
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
+          }
+
+          .artifact-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+          }
+
+          .artifact-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+            transition: left 0.6s;
+          }
+
+          .artifact-card:hover::before {
+            left: 100%;
+          }
+
+          .artifact-card:hover {
+            border-color: rgba(139, 92, 246, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
+          }
+
+          .sepia-aged {
+            filter: sepia(0.2) saturate(0.8);
+            opacity: 0.95;
+          }
+
+          .pulse-glow {
+            animation: pulse-glow 3s ease-in-out infinite;
+          }
+
+          @keyframes pulse-glow {
+            0%, 100% {
+              box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3);
+              border-color: rgba(139, 92, 246, 0.2);
+            }
+            50% {
+              box-shadow: 0 0 0 20px rgba(139, 92, 246, 0);
+              border-color: rgba(139, 92, 246, 0.4);
+            }
+          }
+
+          .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          /* Professional Typography */
+          .text-hero {
+            font-size: clamp(2.5rem, 5vw, 5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+          }
+
+          .text-section {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+          }
+
+          .text-body {
+            font-size: 1.125rem;
+            font-weight: 400;
+            line-height: 1.7;
+            color: #e2e8f0;
+          }
+
+          /* Responsive Grid Improvements */
+          @media (max-width: 768px) {
+            .text-hero { font-size: clamp(2rem, 8vw, 3.5rem); }
+            .text-section { font-size: clamp(1.25rem, 5vw, 2rem); }
+            .button-primary, .button-outline { padding: 0.75rem 2rem; }
+
+            /* Mobile layout adjustments */
+            .mobile-stack {
+              flex-direction: column;
+              gap: 1rem;
+            }
+
+            .mobile-full-width {
+              width: 100%;
+            }
+
+            .mobile-padding {
+              padding: 1rem;
+            }
+
+            .mobile-text-center {
+              text-align: center;
+            }
+
+            .mobile-grid-cols-1 {
+              grid-template-columns: 1fr;
+            }
+
+            .mobile-gap-4 {
+              gap: 1rem;
+            }
+
+            /* Artifact preview mobile improvements */
+            .artifact-preview-mobile {
+              max-height: 200px;
+              overflow-y: auto;
+            }
+
+            /* Vault cards mobile */
+            .vault-card-mobile {
+              margin-bottom: 1rem;
+            }
+          }
+
+          /* Loading States */
+          .loading-shimmer {
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+          }
+
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+
+          /* Custom Scrollbar */
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 3px;
+          }
+
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            border-radius: 3px;
+          }
+
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #7C3AED, #DB2777);
+          }
+        `}</style>
+
+
+        {/* Enhanced HERO SECTION with 3D effects */}
+        <motion.section
+          ref={heroRef}
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="relative min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-20"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black" />
+
+          <div className="relative z-10 text-center max-w-4xl mx-auto">
+            {/* Floating Icon with enhanced effects */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, rotateY: -15 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              transition={{ delay: 0.2, duration: 0.8, type: "spring" }}
+              className="mb-8"
+            >
+              <div className="relative">
+                <motion.div 
+                  className="w-28 h-28 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-purple-800 flex items-center justify-center shadow-2xl shadow-purple-500/30 relative overflow-hidden"
+                  whileHover={{ 
+                    scale: 1.05, 
+                    rotateY: 5,
+                    boxShadow: "0 25px 50px -12px rgba(168, 85, 247, 0.5)"
+                  }}
+                  animate={{
+    boxShadow: "0 25px 50px -12px rgba(168, 85, 247, 0.5)"
+  }}
+
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  {/* Animated background gradient */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  />
+
+                  <div className="relative z-10">
+                    <motion.div
+                      key={currentIcon.name}
+                      initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                      animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                      exit={{ scale: 0, rotate: 180, opacity: 0 }}
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 260, 
+                        damping: 20,
+                        duration: 0.6
+                      }}
+                    >
+                      {React.createElement(currentIcon, { 
+                        className: "w-14 h-14 text-white" 
+                      })}
+                    </motion.div>
+                  </div>
+                  
+                  {/* Floating particles around icon */}
+                  {[...Array(6)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-2 h-2 bg-white rounded-full opacity-60"
+                      style={{
+                        top: `${20 + i * 10}%`,
+                        left: `${10 + i * 15}%`,
+                      }}
+                      animate={{
+                        y: [0, -20, 0],
+                        opacity: [0.3, 1, 0.3],
+                        scale: [0.8, 1.2, 0.8],
+                      }}
+                      transition={{
+                        duration: 2 + i * 0.3,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                      }}
+                    />
+                  ))}
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Enhanced Typography with 3D effects */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.8 }}
+              className="space-y-4"
+            >
+              <motion.h1 
+                className="text-5xl sm:text-6xl md:text-7xl font-bold gradient-text relative"
+                style={{
+                  textShadow: "0 0 30px rgba(168, 85, 247, 0.5)",
+                }}
+                whileHover={{ scale: 1.02 }}
+              >
+                <motion.span
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                  className="block"
+                >
+                  Unearth the Past
+                </motion.span>
+                <motion.span
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8, duration: 0.6 }}
+                  className="block bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent"
+                >
+                 
+                </motion.span>
+              </motion.h1>
+              
+              <motion.h2 
+                className="text-3xl sm:text-4xl md:text-5xl font-bold text-white"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.6 }}
+              >
+                Create the{' '}
+                <motion.span
+                  className="bg-gradient-to-r from-pink-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+                  animate={{
+                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  style={{ backgroundSize: "200% 200%" }}
+                >
+                  Future
+                </motion.span>
+              </motion.h2>
+            </motion.div>
+
+            {/* Enhanced Description */}
+
+            <div className="relative mb-16">
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2, duration: 0.6 }}
+                className="text-2xl sm:text-3xl text-gray-200 max-w-3xl mx-auto leading-relaxed font-medium"
+              >
+                <motion.span
+                  className="relative z-10"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  Preserve your memories in digital time capsules. Create sealed vaults, explore historical moments, and unlock them at the perfect future date.
+                </motion.span>
+              </motion.p>
+
+              {/* Background glow effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 blur-xl"
+                animate={{
+                  opacity: [0.3, 0.6, 0.3],
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+              />
             </div>
-        </>
-    );
+
+            {/* Enhanced Action Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.4, duration: 0.6 }}
+              className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20"
+            >
+              <motion.button
+                onClick={() => (isUser ? scroll(mainAppRef) : scroll(registerRef))}
+                className="relative group px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 overflow-hidden"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 group-hover:from-purple-500 group-hover:via-pink-500 group-hover:to-purple-500 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                <span className="relative z-10 text-white flex items-center">
+                  {isUser ? 'Continue to Your Capsules' : 'Create Your First Capsule'}
+                  <motion.div
+                    className="ml-2"
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.div>
+                </span>
+              </motion.button>
+              
+              {!isUser && (
+                <motion.button
+                  onClick={() => scroll(loginRef)}
+                  className="px-8 py-4 rounded-xl font-bold text-lg border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white transition-all duration-300 backdrop-blur-sm"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  I Already Have an Account
+                </motion.button>
+              )}
+            </motion.div>
+
+            {/* Enhanced Feature Indicators */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.6, duration: 1 }}
+              className="flex flex-wrap justify-center gap-8 text-sm text-gray-400"
+            >
+
+
+
+
+              {[
+                { icon: History, text: "Historical Events", delay: 0 },
+                { icon: DollarSign, text: "Economic Data", delay: 0.1 },
+                { icon: Cloud, text: "Weather Archives", delay: 0.2 },
+                { icon: Archive, text: "Time Capsule Vault", delay: 0.3 },
+              ].map((feature, index) => (
+                <motion.div
+                  key={feature.text}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.8 + feature.delay, duration: 0.5 }}
+                  className="flex items-center space-x-2 group cursor-pointer"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                >
+                  <motion.div
+                    className="p-2 rounded-lg bg-purple-500/20 group-hover:bg-purple-500/30 transition-colors duration-300"
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <feature.icon className="w-4 h-4 text-purple-400" />
+                  </motion.div>
+                  <span className="group-hover:text-purple-300 transition-colors duration-300">
+                    {feature.text}
+                  </span>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </motion.section>
+
+        {/* LOGIN SECTION */}
+        {!isUser && (
+          <motion.section
+            ref={loginRef}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="min-h-screen flex justify-center items-center px-4 py-12"
+          >
+            <div className="glass-effect w-full max-w-md p-8 shadow-2xl shadow-purple-500/10">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                  <Lock className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold gradient-text">Enter Your Vault</h2>
+                <p className="text-gray-400 text-sm mt-2">Access your time capsules</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-6">
+                {loginError && (
+                  <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                    {loginError}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="block text-white text-sm font-medium">Email Address</label>
+                  <input
+                    type="email"
+                    value={loginForm.email}
+                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-white text-sm font-medium">Password</label>
+                  <input
+                    type="password"
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="remember"
+                    checked={loginForm.remember}
+                    onChange={(e) => setLoginForm({ ...loginForm, remember: e.target.checked })}
+                    className="rounded border-gray-600"
+                  />
+                  <label htmlFor="remember" className="text-white text-sm">
+                    Remember me
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loginLoading}
+                  className="w-full button-primary disabled:opacity-50"
+                >
+                  {loginLoading ? 'Logging in...' : 'Login'}
+                </button>
+
+                <p className="text-center text-gray-400 text-sm">
+                  Don't have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => scroll(registerRef)}
+                    className="text-purple-400 hover:text-pink-400 transition-colors"
+                  >
+                    Create one
+                  </button>
+                </p>
+              </form>
+            </div>
+          </motion.section>
+        )}
+
+        {/* REGISTER SECTION */}
+        {!isUser && (
+          <motion.section
+            ref={registerRef}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="min-h-screen flex justify-center items-center px-4 py-12"
+          >
+            <div className="glass-effect w-full max-w-md p-8 shadow-2xl shadow-pink-500/10">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center">
+                  <Plus className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold gradient-text">Create Your Account</h2>
+                <p className="text-gray-400 text-sm mt-2">Start preserving memories</p>
+              </div>
+
+              <form onSubmit={handleRegister} className="space-y-6">
+                {registerError && (
+                  <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                    {registerError}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="block text-white text-sm font-medium">Full Name</label>
+                  <input
+                    type="text"
+                    value={registerForm.name}
+                    onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                    placeholder="John Doe"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-white text-sm font-medium">Email Address</label>
+                  <input
+                    type="email"
+                    value={registerForm.email}
+                    onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-white text-sm font-medium">Password</label>
+                  <input
+                    type="password"
+                    value={registerForm.password}
+                    onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                    required
+                    minLength={8}
+                    className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                    placeholder="Min. 8 characters"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-white text-sm font-medium">Confirm Password</label>
+                  <input
+                    type="password"
+                    value={registerForm.password_confirmation}
+                    onChange={(e) =>
+                      setRegisterForm({ ...registerForm, password_confirmation: e.target.value })
+                    }
+                    required
+                    className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                    placeholder="Re-enter password"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={registerLoading}
+                  className="w-full button-primary disabled:opacity-50"
+                >
+                  {registerLoading ? 'Creating...' : 'Create Account'}
+                </button>
+
+                <p className="text-center text-gray-400 text-sm">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => scroll(loginRef)}
+                    className="text-purple-400 hover:text-pink-400 transition-colors"
+                  >
+                    Login here
+                  </button>
+                </p>
+              </form>
+            </div>
+          </motion.section>
+        )}
+
+
+        {/* MAIN APPLICATION (logged in users only) */}
+        {isUser && (
+          <>
+
+            {/* Enhanced Navigation Bar with 3D effects */}
+            <motion.nav
+              initial={{ y: -100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+              className="sticky top-0 z-50 glass-effect border-b border-gray-800/50 backdrop-blur-xl"
+            >
+              <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+                <motion.div 
+                  className="flex items-center space-x-3"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <motion.div 
+                    className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-purple-800 flex items-center justify-center shadow-lg shadow-purple-500/30 relative overflow-hidden"
+                    whileHover={{ 
+                      rotateY: 360,
+                      boxShadow: "0 20px 40px rgba(168, 85, 247, 0.4)"
+                    }}
+                    transition={{ duration: 0.8 }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    />
+                    <div className="relative z-10">
+                      <History className="w-6 h-6 text-white" />
+                    </div>
+                  </motion.div>
+
+                  <motion.span 
+                    className="text-xl font-bold gradient-text"
+                    animate={{
+                      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                    }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                    style={{ backgroundSize: "200% 200%" }}
+                  >
+                    Vault - Unearth the past
+                  </motion.span>
+                </motion.div>
+
+                <div className="hidden md:flex items-center space-x-8">
+                  {[
+                    { label: "Capsules", action: () => scroll(mainAppRef), icon: Shield },
+                    { label: "Vault", action: () => scroll(vaultRef), icon: Archive },
+                  ].map((item, index) => (
+                    <motion.button
+                      key={item.label}
+                      onClick={item.action}
+                      className="flex items-center space-x-2 text-white hover:text-purple-400 transition-colors text-sm font-medium group relative px-3 py-2 rounded-lg"
+                      whileHover={{ 
+                        scale: 1.05,
+                        backgroundColor: "rgba(168, 85, 247, 0.1)"
+                      }}
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 * index, duration: 0.5 }}
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        whileHover={{ scale: 1.1 }}
+                      />
+                      <motion.div
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <item.icon className="w-4 h-4 relative z-10" />
+                      </motion.div>
+                      <span className="relative z-10">{item.label}</span>
+                    </motion.button>
+                  ))}
+                  
+                  <motion.button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-2 text-red-400 hover:text-red-300 transition-colors text-sm font-medium px-3 py-2 rounded-lg group relative"
+                    whileHover={{ 
+                      scale: 1.05,
+                      backgroundColor: "rgba(239, 68, 68, 0.1)"
+                    }}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-red-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      whileHover={{ scale: 1.1 }}
+                    />
+                    <motion.div
+                      whileHover={{ x: -2 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <LogOut className="w-4 h-4 relative z-10" />
+                    </motion.div>
+                    <span className="relative z-10">Logout</span>
+                  </motion.button>
+                </div>
+
+                <motion.div 
+                  className="md:hidden"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Menu className="w-6 h-6 text-white hover:text-purple-400 transition-colors cursor-pointer" />
+                </motion.div>
+              </div>
+            </motion.nav>
+
+
+
+
+            {/* Enhanced MAIN APP SECTION with Interactive Sidebars and 3D floating effects */}
+            <section ref={mainAppRef} className="min-h-screen py-20 px-4 relative">
+              <div className="container mx-auto max-w-7xl">
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.8, type: "spring", stiffness: 100 }}
+                  className="text-center mb-20 relative"
+                >
+                  {/* Background glow effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 blur-3xl"
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      opacity: [0.3, 0.6, 0.3],
+                    }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                  />
+                  
+                  <FadeInUp delay={0.4}>
+                    <motion.h1 
+                      className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 gradient-text relative z-10"
+                      whileHover={{ scale: 1.02 }}
+                      style={{
+                        textShadow: "0 0 40px rgba(168, 85, 247, 0.6)",
+                      }}
+                    >
+                      <SlideInLeft delay={0.4} duration={0.6}>
+                        Explore and Create
+                      </SlideInLeft>
+                      <SlideInRight delay={0.6} duration={0.6}>
+                        Time Capsules
+                      </SlideInRight>
+                    </motion.h1>
+                  </FadeInUp>
+                  
+
+                  <FadeInUp delay={0.8}>
+                    <p className="text-2xl sm:text-3xl text-gray-200 max-w-3xl mx-auto leading-relaxed relative z-10 font-medium">
+                      Travel through time periods and curate artifacts for your digital vaults with advanced 3D visualization
+                    </p>
+                  </FadeInUp>
+                </motion.div>
+
+
+
+                {/* Circular Button Layout with Content Panels */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Enhanced LEFT: Time Period Selector with Playful Animations */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -100, rotateY: -15 }}
+                    animate={{ 
+                      opacity: 1, 
+                      x: 0, 
+                      rotateY: 0,
+                      scale: 1
+                    }}
+                    transition={{ delay: 0.3, duration: 0.8, type: "spring", stiffness: 100 }}
+                    whileHover={{ 
+                      x: -5, 
+                      rotateY: 5,
+                      scale: 1.02,
+                      boxShadow: "0 25px 50px -12px rgba(168, 85, 247, 0.3)"
+                    }}
+                    className="lg:col-span-1"
+                  >
+                  <div className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-2xl p-6 h-[600px] relative overflow-hidden group transition-all duration-300">
+                    {/* Playful background effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/10 to-transparent pointer-events-none"
+                      animate={{
+                        opacity: scrollYProgress.get() > 0.2 ? 0.8 : 0.4,
+                      }}
+                      transition={{ duration: 0.3 }}
+                    />
+                    
+                    <div className="h-full flex flex-col">
+                      <h3 className="text-lg font-semibold text-white mb-6 flex items-center sticky top-0 z-10 bg-gradient-to-b from-black/50 to-transparent pb-4">
+                        <Clock className="w-5 h-5 mr-2 text-purple-400" />
+                        Time Period Selector
+                        <span className="ml-auto text-sm font-normal text-purple-400">({selectedYear})</span>
+                      </h3>
+
+
+
+
+
+
+
+                      {/* Scrollable Time Periods - ENHANCED SCROLLABILITY */}
+                      <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-2 pr-2 scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-gray-800 custom-scrollbar" style={{ 
+                        maxHeight: 'calc(100vh - 500px)', 
+                        minHeight: '300px',
+                        scrollBehavior: 'smooth'
+                      }}>
+                        {timePeriods.map((period) => (
+                          <motion.button
+                            key={period.year}
+                            onClick={() => setSelectedYear(period.year)}
+                            className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 relative ${
+                              selectedYear === period.year
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                                : 'bg-gray-900/50 hover:bg-gray-800 text-white hover:border-purple-500/30'
+                            }`}
+                            whileHover={{ scale: 1.02, x: 4 }}
+                            whileTap={{ scale: 0.98 }}
+                            layout
+                          >
+                            {selectedYear === period.year && (
+                              <motion.span 
+                                className="absolute left-2 top-1/2 transform -translate-y-1/2 w-2 h-2 rounded-full bg-white"
+                                animate={{ scale: [1, 1.2, 1] }}
+                                transition={{ duration: 1, repeat: Infinity }}
+                              />
+                            )}
+                            <span className={`ml-6 ${selectedYear === period.year ? 'text-white' : ''}`}>
+                              {period.label}
+                            </span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+
+
+
+
+
+                  {/* Enhanced CENTER: Artifacts Panel with Enhanced Preview */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 100, rotateX: -10, scale: 0.95 }}
+                    animate={{ 
+                      opacity: 1, 
+                      y: 0, 
+                      rotateX: 0,
+                      scale: 1
+                    }}
+                    transition={{ delay: 0.4, duration: 0.8, type: "spring", stiffness: 100 }}
+                    whileHover={{ 
+                      y: -5,
+                      scale: 1.02,
+                      rotateY: 2,
+                      boxShadow: "0 25px 50px -12px rgba(168, 85, 247, 0.3)"
+                    }}
+                    className="lg:col-span-1"
+                  >
+                    <div className="bg-gradient-to-br from-pink-900/20 to-purple-900/20 border border-pink-500/30 rounded-2xl p-6 h-[600px] relative overflow-hidden group transition-all duration-300">
+                      {/* Playful background effect */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-b from-transparent via-pink-500/10 to-transparent pointer-events-none"
+                        animate={{
+                          opacity: scrollYProgress.get() > 0.4 ? 0.8 : 0.4,
+                        }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      
+                      <div className="h-full flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-gradient-to-b from-black/50 to-transparent pb-4">
+                          <h3 className="text-lg font-semibold text-white flex items-center">
+                            <FileUp className="w-5 h-5 mr-2 text-purple-400" />
+                            Your Artifact Vault
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-purple-500/20 text-purple-400">
+                              {selectedYear}
+                            </span>
+                            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-pink-500/20 text-pink-400">
+                              {artifacts.length} items
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Scrollable Artifacts List */}
+                        {artifacts.length === 0 ? (
+                          <div className="flex-1 flex items-center justify-center text-center py-12">
+                            <div>
+                              <motion.div
+                                animate={{ 
+                                  scale: [1, 1.1, 1],
+                                  opacity: [0.5, 0.8, 0.5]
+                                }}
+                                transition={{ duration: 3, repeat: Infinity }}
+                              >
+                                <Shield className="w-16 h-16 mx-auto mb-4 text-gray-600" />
+                              </motion.div>
+                              <p className="font-semibold mb-2 text-white">Empty Artifact Vault</p>
+                              <p className="text-sm text-gray-400 mb-4">Add historical events, memories, or news headlines</p>
+                              <button
+                                onClick={() => setShowArtifactModal(true)}
+                                className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors"
+                              >
+                                Add First Artifact
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-gray-800">
+                            <AnimatePresence>
+                              {artifacts.map((artifact, index) => (
+                                <motion.div
+                                  key={artifact.id}
+                                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                  animate={{ 
+                                    opacity: agingOpacity(artifact.year), 
+                                    scale: 1,
+                                    y: 0
+                                  }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                                  transition={{ delay: index * 0.1 }}
+                                  className="artifact-card sepia-aged relative group hover:border-purple-500/50"
+                                  layout
+                                >
+                                  {/* Enhanced Artifact Card */}
+                                  <div className="p-4">
+                                    <div className="flex justify-between items-start mb-3">
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-semibold text-white text-sm mb-1 truncate">{artifact.title}</h4>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="px-2 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-medium">
+                                            {artifact.year}
+                                          </span>
+                                          <span className="px-2 py-1 rounded-full bg-gray-700 text-gray-300 text-xs">
+                                            {artifact.type}
+                                          </span>
+                                          {artifact.file && (
+                                            <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs flex items-center">
+                                              <Upload className="w-3 h-3 mr-1" />
+                                              File
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <motion.button
+                                        onClick={() => removeArtifact(artifact.id)}
+                                        className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-full hover:bg-red-500/10"
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </motion.button>
+                                    </div>
+                                    
+                                    <p className="text-sm text-gray-300 line-clamp-3 mb-3 leading-relaxed">
+                                      {artifact.description}
+                                    </p>
+                                    
+                                    {/* Artifact Preview Actions */}
+                                    <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
+                                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                                        <Clock className="w-3 h-3" />
+                                        {new Date().toLocaleDateString()}
+                                      </div>
+                                      <motion.button
+                                        onClick={() => {
+                                          // Preview artifact functionality
+                                          alert(`Previewing: ${artifact.title}\n\n${artifact.description}`);
+                                        }}
+                                        className="text-xs px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
+                                        whileHover={{ scale: 1.05 }}
+                                      >
+                                        Preview
+                                      </motion.button>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Hover glow effect */}
+                                  <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-pink-500/0 rounded-lg opacity-0 group-hover:opacity-100"
+                                    transition={{ duration: 0.3 }}
+                                  />
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                          </div>
+                        )}
+
+                        {/* Action Buttons - Sticky at Bottom */}
+                        <div className="space-y-3 pt-4 border-t border-gray-700 sticky bottom-0 bg-gradient-to-t from-black/90 to-transparent">
+                          <motion.button
+                            onClick={() => setShowArtifactModal(true)}
+                            className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg"
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Plus className="w-5 h-5" />
+                            Add New Artifact
+                          </motion.button>
+
+                          {artifacts.length > 0 && (
+                            <motion.button
+                              onClick={() => scroll(assembleRef)}
+                              className="w-full py-3 rounded-lg bg-pink-500/20 border border-pink-500 text-pink-400 hover:bg-pink-500/30 font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              whileHover={{ scale: 1.02, y: -2 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <Shield className="w-5 h-5" />
+                              Review & Seal Capsule
+                              <span className="text-xs px-2 py-1 rounded-full bg-pink-500/30">
+                                {artifacts.length}
+                              </span>
+                            </motion.button>
+                          )}
+                          
+                          {/* Progress indicator when adding artifacts */}
+                          {artifacts.length > 0 && (
+                            <div className="mt-3">
+                              <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                                <span>Capsule Progress</span>
+                                <span>{Math.min(artifacts.length * 25, 100)}%</span>
+                              </div>
+                              <div className="w-full bg-gray-700 rounded-full h-2">
+                                <motion.div
+                                  className="h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${Math.min(artifacts.length * 25, 100)}%` }}
+                                  transition={{ duration: 0.5 }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+
+
+
+
+
+                  {/* Enhanced RIGHT: Historical Library with Interactive Animations */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 100, rotateY: 15, scale: 0.95 }}
+                    animate={{
+                      opacity: 1,
+                      x: 0,
+                      rotateY: 0,
+                      scale: 1
+                    }}
+                    transition={{ delay: 0.5, duration: 0.8, type: "spring", stiffness: 100 }}
+                    whileHover={{
+                      x: 5,
+                      rotateY: -5,
+                      scale: 1.02,
+                      boxShadow: "0 25px 50px -12px rgba(168, 85, 247, 0.3)"
+                    }}
+                    className="lg:col-span-1"
+                  >
+                    <div className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-2xl p-6 h-[600px] overflow-y-auto relative overflow-hidden group transition-all duration-300">
+
+                      {/* Wikipedia Events */}
+                      <div className="mb-8">
+                        <h4 className="font-semibold text-white mb-3 flex items-center text-sm">
+                          <History className="w-4 h-4 mr-2 text-purple-400" />
+                          Wikipedia Events (Dec 17)
+                        </h4>
+                        {dataLoading ? (
+                          <div className="text-center py-4">
+                            <div className="animate-spin w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full mx-auto" />
+                          </div>
+                        ) : historicalData.events.length > 0 ? (
+                          <div className="space-y-3">
+                            {historicalData.events.slice(0, 3).map((event, i) => (
+                              <div key={i} className="artifact-card p-4">
+                                <p className="text-xs text-purple-400 font-semibold mb-1">{event.year}</p>
+                                <p className="text-sm text-white mb-3 line-clamp-2">{event.text}</p>
+                                <button
+                                  onClick={() =>
+                                    addArtifact({
+                                      title: `Event ${event.year}`,
+                                      description: event.text,
+                                      year: event.year,
+                                      type: 'Historical Event',
+                                    })
+                                  }
+                                  className="w-full text-xs py-2 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
+                                >
+                                  Add to Capsule
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-400">No events found</p>
+                        )}
+                      </div>
+
+                      {/* News Headlines */}
+                      <div className="mb-8">
+                        <h4 className="font-semibold text-white mb-3 flex items-center text-sm">
+                          <Newspaper className="w-4 h-4 mr-2 text-purple-400" />
+                          News Headlines ({selectedYear})
+                        </h4>
+                        {dataLoading ? (
+                          <div className="text-center py-4">
+                            <div className="animate-spin w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full mx-auto" />
+                          </div>
+                        ) : historicalData.news.length > 0 ? (
+                          <div className="space-y-3">
+                            {historicalData.news.slice(0, 2).map((article, i) => (
+                              <div key={i} className="artifact-card p-4">
+                                {article.thumbnail && (
+                                  <img
+                                    src={article.thumbnail}
+                                    alt={article.title}
+                                    className="w-full h-24 object-cover rounded-lg mb-3"
+                                  />
+                                )}
+                                <p className="text-xs text-purple-400 font-semibold mb-1">{article.source}</p>
+                                <p className="text-sm text-white mb-3 line-clamp-2">{article.title}</p>
+                                <button
+                                  onClick={() =>
+                                    addArtifact({
+                                      title: article.title,
+                                      description: article.description || article.title,
+                                      year: selectedYear,
+                                      type: 'News Headline',
+                                    })
+                                  }
+                                  className="w-full text-xs py-2 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
+                                >
+                                  Add to Capsule
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-400">No news for this year</p>
+                        )}
+                      </div>
+
+                      {/* Economic Data */}
+                      <div className="mb-8">
+                        <EconomicDataLoader
+                          year={selectedYear}
+                          onAdd={(item) => addArtifact(item)}
+                        />
+                      </div>
+
+                      {/* Weather */}
+                      <WeatherSidebar
+                        year={selectedYear}
+                        onAddSummary={(summary) =>
+                          addArtifact({
+                            title: `Weather ${selectedYear}`,
+                            description: summary,
+                            year: selectedYear,
+                            type: 'Weather',
+                          })
+                        }
+                      />
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </section>
+
+            {/* ASSEMBLE CAPSULE SECTION */}
+            {artifacts.length > 0 && (
+              <motion.section
+                ref={assembleRef}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="min-h-screen py-16 px-4"
+              >
+                <div className="container mx-auto max-w-4xl">
+                  <h2 className="text-4xl font-bold mb-2 gradient-text text-center">
+                    Assemble Your Time Capsule
+                  </h2>
+                  <p className="text-gray-400 text-center mb-12">
+                    Configure and seal your collection of memories
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Preview */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="glass-effect rounded-2xl p-8"
+                    >
+                      <h3 className="text-2xl font-semibold text-white mb-8">Preview</h3>
+                      <div className="text-center">
+                        <div className="relative inline-block mb-8">
+                          <div className="w-40 h-40 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center pulse-glow">
+                            <Shield className="w-20 h-20 text-purple-400" />
+                          </div>
+                          <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                            <Lock className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-xs text-gray-400 font-semibold">Capsule Name</p>
+                          <p className="text-lg font-semibold text-white">
+                            {capsuleForm.name || 'Untitled Capsule'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-semibold">Artifacts Included</p>
+                          <p className="text-lg font-semibold text-purple-400">{artifacts.length} items</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-semibold">Reveal Date</p>
+                          <p className="text-sm text-white">
+                            {capsuleForm.reveal_date ? new Date(capsuleForm.reveal_date).toLocaleDateString() : 'Not set'}
+                          </p>
+                        </div>
+
+                        {/* Enhanced Artifact Preview */}
+                        {artifacts.length > 0 && (
+                          <div className="mt-6">
+                            <p className="text-xs text-gray-400 font-semibold mb-3">Artifact Preview</p>
+                            <div className="max-h-48 overflow-y-auto space-y-2">
+                              <AnimatePresence>
+                                {artifacts.map((artifact, index) => (
+                                  <motion.div
+                                    key={artifact.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="bg-gray-800/50 rounded-lg p-3 border border-gray-700"
+                                  >
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-white truncate">{artifact.title}</p>
+                                        <p className="text-xs text-white/70">{artifact.type} • {artifact.year}</p>
+                                        <p className="text-xs text-white/80 line-clamp-2 mt-1">{artifact.description}</p>
+                                      </div>
+                                      <button
+                                        onClick={() => removeArtifact(artifact.id)}
+                                        className="ml-2 text-red-400 hover:text-red-300 transition-colors flex-shrink-0"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </AnimatePresence>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+
+                    {/* Configuration */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="glass-effect rounded-2xl p-8"
+                    >
+                      <h3 className="text-2xl font-semibold text-white mb-8">Configuration</h3>
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-white text-sm font-medium mb-2">
+                            Capsule Name *
+                          </label>
+                          <input
+                            type="text"
+                            value={capsuleForm.name}
+                            onChange={(e) =>
+                              setCapsuleForm({ ...capsuleForm, name: e.target.value })
+                            }
+                            className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                            placeholder="My 2024 Memories"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-white text-sm font-medium mb-2">
+                            Description
+                          </label>
+                          <textarea
+                            value={capsuleForm.description}
+                            onChange={(e) =>
+                              setCapsuleForm({ ...capsuleForm, description: e.target.value })
+                            }
+                            className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                            placeholder="Describe your capsule..."
+                            rows="3"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-white text-sm font-medium mb-2">
+                            Reveal Date *
+                          </label>
+                          <input
+                            type="date"
+                            value={capsuleForm.reveal_date}
+                            onChange={(e) =>
+                              setCapsuleForm({ ...capsuleForm, reveal_date: e.target.value })
+                            }
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                            required
+                          />
+                        </div>
+
+
+                        <div>
+                          <label className="block text-white text-sm font-medium mb-2">
+                            Personal Message
+                          </label>
+                          <textarea
+                            value={capsuleForm.message}
+                            onChange={(e) =>
+                              setCapsuleForm({ ...capsuleForm, message: e.target.value })
+                            }
+                            className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                            placeholder="To my future self..."
+                            rows="4"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-white text-sm font-medium mb-2">
+                            Email Recipients (Optional)
+                          </label>
+                          <input
+                            type="email"
+                            value={capsuleForm.email_recipients.join(', ')}
+                            onChange={(e) =>
+                              setCapsuleForm({
+                                ...capsuleForm,
+                                email_recipients: e.target.value.split(',').map(email => email.trim()).filter(email => email)
+                              })
+                            }
+                            className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                            placeholder="friend@example.com, family@example.com"
+                          />
+                          <p className="text-xs text-gray-400 mt-1">
+                            Separate multiple emails with commas. Recipients will receive the capsule on the reveal date.
+                          </p>
+                        </div>
+
+                        <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                          <p className="text-sm text-yellow-400">
+                            Warning: Once sealed, this capsule will be locked until the reveal date.
+                          </p>
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                          <button
+                            onClick={() => scroll(mainAppRef)}
+                            className="flex-1 py-3 rounded-lg border border-gray-600 text-white hover:bg-gray-800/50 transition-colors font-semibold"
+                          >
+                            Back
+                          </button>
+                          <button
+                            onClick={sealCapsule}
+                            className="flex-1 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold transition-all duration-300"
+                            disabled={!capsuleForm.name || !capsuleForm.reveal_date || artifacts.length === 0}
+                          >
+                            <Lock className="w-5 h-5 inline mr-2" />
+                            Seal Capsule
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.section>
+            )}
+
+
+            {/* Enhanced VAULT SECTION with 3D floating effects */}
+            <motion.section
+              ref={vaultRef}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              className="min-h-screen py-20 px-4 relative"
+            >
+              <div className="container mx-auto max-w-6xl">
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl font-bold mb-2 gradient-text">
+                    Your Time Capsule Vault
+                  </h2>
+                  <p className="text-lg text-gray-400">
+                    A collection of your preserved memories and moments
+                  </p>
+                </div>
+
+                <div className="text-center mb-12">
+                  <button
+                    onClick={() => scroll(mainAppRef)}
+                    className="button-primary"
+                  >
+                    <Plus className="w-5 h-5 inline mr-2" />
+                    Create New Capsule
+                  </button>
+                </div>
+
+                {capsulesLoading ? (
+                  <div className="text-center py-20">
+                    <div className="animate-spin w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4" />
+                    <p className="text-gray-400">Loading your capsules...</p>
+                  </div>
+                ) : capsules.length === 0 ? (
+                  <div className="text-center py-20">
+                    <Shield className="w-32 h-32 mx-auto mb-6 opacity-30" />
+                    <h3 className="text-2xl font-semibold text-white mb-3">No capsules yet</h3>
+                    <p className="text-gray-400 max-w-md mx-auto">
+                      Create your first time capsule to start preserving memories for the future
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {capsules.map((capsule) => {
+                      const revealDate = new Date(capsule.reveal_date);
+                      const now = new Date();
+                      const isUnlocked = now >= revealDate;
+                      const daysLeft = Math.max(
+                        0,
+                        Math.ceil((revealDate - now) / (1000 * 60 * 60 * 24))
+                      );
+
+                      return (
+
+                        <motion.div
+                          key={capsule.id}
+                          initial={{ opacity: 0, scale: 0.8, y: 50, rotateX: -15 }}
+                          animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+                          whileHover={{ 
+                            scale: 1.05, 
+                            y: -8,
+                            rotateX: 5,
+                            rotateY: 5,
+                            boxShadow: "0 25px 50px -12px rgba(168, 85, 247, 0.4)"
+                          }}
+                          transition={{ 
+                            type: "spring", 
+                            stiffness: 300, 
+                            damping: 20,
+                            delay: capsule.id * 0.1
+                          }}
+                          className="artifact-card p-8 sepia-aged relative overflow-hidden group cursor-pointer"
+                        >
+                          {/* Floating background glow effect */}
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100"
+                            animate={{
+                              scale: [1, 1.02, 1],
+                            }}
+                            transition={{ duration: 3, repeat: Infinity }}
+                          />
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="font-semibold text-white text-lg">{capsule.title}</h3>
+                              <p className="text-sm text-gray-400 mt-1">{capsule.description}</p>
+                            </div>
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-purple-500/20">
+                              {isUnlocked ? (
+                                <Shield className="w-5 h-5 text-green-400" />
+                              ) : (
+                                <Lock className="w-5 h-5 text-purple-400" />
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 mb-6 text-sm">
+                            <p className="text-white/70">
+                              Created: {new Date(capsule.created_at).toLocaleDateString()}
+                            </p>
+                            <p className="text-white/70">
+                              Opens: {revealDate.toLocaleDateString()}
+                            </p>
+                          </div>
+
+                          {isUnlocked ? (
+                            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 mb-6">
+                              <p className="text-sm text-green-400 font-semibold">Unlocked</p>
+                            </div>
+                          ) : (
+                            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 mb-6">
+                              <p className="text-sm text-purple-400 font-semibold">Locked</p>
+                              <p className="text-xs text-gray-400">Opens in {daysLeft} days</p>
+                            </div>
+                          )}
+
+                          <div className="mb-4">
+                            <p className="text-xs text-gray-400 font-semibold mb-2">Artifacts</p>
+                            <p className="text-lg font-bold text-purple-400">
+                              {capsule.artifacts?.length || 0} items
+                            </p>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button className="flex-1 py-2 text-sm rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors font-semibold">
+                              View
+                            </button>
+                            <button
+                              onClick={() => deleteCapsule(capsule.id)}
+                              className="flex-1 py-2 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors font-semibold"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.section>
+
+            {/* ARTIFACT MODAL */}
+            <AnimatePresence>
+              {showArtifactModal && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm"
+                  onClick={() => setShowArtifactModal(false)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="glass-effect rounded-2xl p-8 max-w-md w-full shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-2xl font-bold gradient-text">Add New Artifact</h3>
+                      <button
+                        onClick={() => setShowArtifactModal(false)}
+                        className="text-white hover:text-purple-400 transition-colors"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={newArtifact.title}
+                          onChange={(e) =>
+                            setNewArtifact({ ...newArtifact, title: e.target.value })
+                          }
+                          className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                          placeholder="Artifact title"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          Description
+                        </label>
+                        <textarea
+                          value={newArtifact.description}
+                          onChange={(e) =>
+                            setNewArtifact({ ...newArtifact, description: e.target.value })
+                          }
+                          className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                          placeholder="Describe your artifact..."
+                          rows="3"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          Year
+                        </label>
+                        <input
+                          type="number"
+                          value={newArtifact.year}
+                          onChange={(e) =>
+                            setNewArtifact({
+                              ...newArtifact,
+                              year: parseInt(e.target.value) || selectedYear,
+                            })
+                          }
+                          className="w-full px-4 py-3 rounded-lg glass-effect border border-gray-600 focus:border-purple-500 focus:outline-none"
+                        />
+                      </div>
+
+
+
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          Category
+                        </label>
+                        <select
+                          value={newArtifact.type}
+                          onChange={(e) =>
+                            setNewArtifact({ ...newArtifact, type: e.target.value })
+                          }
+                          className="w-full px-4 py-3 rounded-lg border-2 focus:border-purple-500 focus:outline-none transition-all duration-300"
+                          style={{ 
+                            backgroundColor: '#000000',
+                            color: '#ffffff',
+                            borderColor: '#000000'
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = '#a855f7'}
+                          onBlur={(e) => e.target.style.borderColor = '#000000'}
+                        >
+                          <option value="Personal Memory" style={{ backgroundColor: '#000000', color: '#ffffff' }}>Personal Memory</option>
+                          <option value="Photo" style={{ backgroundColor: '#000000', color: '#ffffff' }}>Photo</option>
+                          <option value="Video" style={{ backgroundColor: '#000000', color: '#ffffff' }}>Video</option>
+                          <option value="Text" style={{ backgroundColor: '#000000', color: '#ffffff' }}>Text</option>
+                          <option value="Prediction" style={{ backgroundColor: '#000000', color: '#ffffff' }}>Prediction</option>
+                          <option value="Historical Event" style={{ backgroundColor: '#000000', color: '#ffffff' }}>Historical Event</option>
+                          <option value="News Headline" style={{ backgroundColor: '#000000', color: '#ffffff' }}>News Headline</option>
+                          <option value="Economic Data" style={{ backgroundColor: '#000000', color: '#ffffff' }}>Economic Data</option>
+                          <option value="Weather" style={{ backgroundColor: '#000000', color: '#ffffff' }}>Weather</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          File Attachment (Optional)
+                        </label>
+                        <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center hover:border-purple-500 transition-colors cursor-pointer">
+                          <input
+                            type="file"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            id="file-upload"
+                          />
+                          <label htmlFor="file-upload" className="cursor-pointer block">
+                            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                            <p className="text-sm text-white font-semibold">
+                              {newArtifact.file ? newArtifact.file.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Supports images, videos, documents
+                            </p>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <button
+                          onClick={() => setShowArtifactModal(false)}
+                          className="flex-1 py-3 rounded-lg border border-gray-600 text-white hover:bg-gray-800/50 transition-colors font-semibold"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (newArtifact.title && newArtifact.description) {
+                              addArtifact({
+                                ...newArtifact,
+                                year: newArtifact.year || selectedYear,
+                              });
+                              setNewArtifact({
+                                title: '',
+                                description: '',
+                                year: selectedYear,
+                                type: 'Personal Memory',
+                                file: null,
+                              });
+                              setShowArtifactModal(false);
+                            } else {
+                              alert('Please fill in title and description');
+                            }
+                          }}
+                          className="flex-1 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold transition-all duration-300"
+                        >
+                          Add Artifact
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        )}
+      </div>
+    </>
+  );
 }

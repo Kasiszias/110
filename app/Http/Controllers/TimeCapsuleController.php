@@ -5,122 +5,203 @@ namespace App\Http\Controllers;
 use App\Models\TimeCapsule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Log;
 
 class TimeCapsuleController extends Controller
 {
-    // Show list page via Inertia
-    public function index()
+    /**
+     * Store a new time capsule (ALLOW GUESTS) - Optimized for performance
+     */
+    public function store(Request $request)
     {
-        $capsules = TimeCapsule::all();
-            return response()->json($capsules);
+        // Set longer timeout for file processing
+        set_time_limit(300); // 5 minutes timeout
 
-        $capsules = TimeCapsule::where('user_id', Auth::id())
-            ->orderBy('reveal_date', 'asc')
-            ->get()
-            ->map(function ($capsule) {
-                return [
-                    'id'                => $capsule->id,
-                    'title'             => $capsule->title,
-                    'description'       => $capsule->description,
-                    'public'            => $capsule->public,
-                    'revealed'          => $capsule->revealed,
-                    'reveal_date'       => $capsule->reveal_date,
-                    'reveal_date_human' => $capsule->reveal_date
-                        ? $capsule->reveal_date->format('Y-m-d H:i')
-                        : null,
-                ];
-            });
-
-        return Inertia::render('Capsules/Index', [
-            'capsules' => $capsules,
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'reveal_date' => 'required|date|after:now',
+            'is_public' => 'sometimes|boolean',
+            'message' => 'nullable|string',
+            'email_recipients' => 'nullable|json',
+            'artifacts' => 'nullable|array|max:50', // Limit artifacts to prevent abuse
+            'artifacts.*.title' => 'nullable|string|max:255',
+            'artifacts.*.description' => 'nullable|string',
+            'artifacts.*.year' => 'nullable|integer',
+            'artifacts.*.type' => 'nullable|string',
+            'artifacts.*.file' => 'nullable|file|max:10240', // 10MB max per file
         ]);
-    }
 
-    // Create a new capsule
-   public function store(Request $request)
-    {
         try {
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
-                'contents' => 'required|array',
-                'reveal_date' => 'required|date',
-                'recipients' => 'nullable|array',
-                'public' => 'nullable|boolean',
-            ]);
-
+            // Create capsule (with or without user_id)
             $capsule = TimeCapsule::create([
-                'user_id' => 1,
+                'user_id' => Auth::id(), // NULL for guests
                 'title' => $validated['title'],
-                'description' => $validated['description'],
-                'contents' => json_encode($validated['contents']),
-                'bury_date' => now(),
+                'description' => $validated['description'] ?? null,
                 'reveal_date' => $validated['reveal_date'],
-                'recipients' => isset($validated['recipients']) ? json_encode($validated['recipients']) : null,
-                'public' => $validated['public'] ?? false,
-                'revealed' => false,
-                'visible' => false,
+                'is_public' => $validated['is_public'] ?? false,
+                'email_recipients' => $validated['email_recipients']
+                    ? json_decode($validated['email_recipients'], true)
+                    : null,
             ]);
 
-            return response()->json($capsule, 201);
-            
-        } catch (\Exception $e) {
-            Log::error('Capsule creation error: ' . $e->getMessage());
+            // Process artifacts in batches to prevent memory issues
+            if (isset($validated['artifacts']) && is_array($validated['artifacts'])) {
+                $artifactsData = [];
+
+                foreach ($validated['artifacts'] as $index => $artifactData) {
+                    $mediaPath = null;
+
+                    // Handle file upload with error handling
+                    if (isset($artifactData['file']) && $artifactData['file'] instanceof \Illuminate\Http\UploadedFile) {
+                        try {
+                            $mediaPath = $artifactData['file']->store('capsule_artifacts', 'public');
+                        } catch (\Exception $e) {
+                            // Log error but continue with other artifacts
+                            \Log::error('File upload failed for artifact ' . $index, [
+                                'error' => $e->getMessage(),
+                                'file_name' => $artifactData['file']->getClientOriginalName()
+                            ]);
+                            continue; // Skip this artifact
+                        }
+                    }
+
+                    $artifactType = $artifactData['type'] ?? 'Personal Memory';
+
+                    $content = [
+                        'title' => $artifactData['title'] ?? 'Untitled',
+                        'description' => $artifactData['description'] ?? '',
+                        'year' => $artifactData['year'] ?? date('Y'),
+                        'type' => $artifactType,
+                    ];
+
+                    $artifactsData[] = [
+                        'capsule_id' => $capsule->id,
+                        'title' => $artifactData['title'] ?? 'Untitled',
+                        'content' => $content,
+                        'artifact_type' => $artifactType,
+                        'year' => $artifactData['year'] ?? date('Y'),
+                        'media_path' => $mediaPath,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                // Bulk insert artifacts for better performance
+                if (!empty($artifactsData)) {
+                    $capsule->artifacts()->insert($artifactsData);
+                }
+            }
+
+            // Load the capsule with artifacts for response
+            $capsule->load('artifacts');
+
             return response()->json([
-                'error' => 'Failed to create capsule',
-                'message' => $e->getMessage()
+                'success' => true,
+                'message' => 'Time capsule created successfully.',
+                'capsule' => $capsule,
+            ], 201);
+
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Capsule creation failed', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'title' => $validated['title'] ?? 'Unknown'
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create time capsule. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
 
-    public function show(TimeCapsule $timeCapsule)
+    /**
+     * Get a specific capsule for the authenticated user.
+     */
+    public function show($id)
     {
-        return response()->json($timeCapsule);
+        $capsule = TimeCapsule::with('artifacts')
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
+
+        return Inertia::render('Capsules/Show', [
+            'capsule' => $capsule,
+            'is_locked' => now()->isBefore($capsule->reveal_date),
+        ]);
     }
 
-    // Show edit form
-    public function edit(TimeCapsule $timeCapsule)
+    /**
+     * Show the form for editing a capsule.
+     */
+    public function edit($id)
     {
-        abort_unless($timeCapsule->user_id === Auth::id(), 403);
+        $capsule = TimeCapsule::where('user_id', Auth::id())
+            ->with('artifacts')
+            ->findOrFail($id);
+
+        if (now()->isAfter($capsule->reveal_date)) {
+            return redirect()->route('capsules.show', $id)
+                ->with('error', 'Cannot edit a revealed capsule.');
+        }
 
         return Inertia::render('Capsules/Edit', [
-            'capsule' => $timeCapsule,
+            'capsule' => $capsule,
         ]);
     }
 
-    // Update capsule
-    public function update(Request $request, TimeCapsule $timeCapsule)
+    /**
+     * Update a capsule.
+     */
+    public function update(Request $request, $id)
     {
-        abort_unless($timeCapsule->user_id === Auth::id(), 403);
+        $capsule = TimeCapsule::where('user_id', Auth::id())->findOrFail($id);
 
-        $data = $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'nullable|string',
-            'reveal_date'  => 'required|date',
-            'public'       => 'boolean',
+        if (now()->isAfter($capsule->reveal_date)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot update a revealed capsule.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string',
+            'reveal_date' => 'sometimes|date|after:now',
+            'is_public' => 'sometimes|boolean',
         ]);
 
-        $timeCapsule->update([
-            'title'       => $data['title'],
-            'description' => $data['description'] ?? null,
-            'reveal_date' => $data['reveal_date'],
-            'public'      => $data['public'] ?? false,
-        ]);
+        $capsule->update($validated);
 
-        return redirect()->route('time-capsules.index');
+        return response()->json([
+            'success' => true,
+            'message' => 'Capsule updated successfully.',
+            'capsule' => $capsule,
+        ]);
     }
 
-    // Delete a capsule (only owner)
-    public function destroy(TimeCapsule $timeCapsule)
+    /**
+     * Delete a capsule and its artifacts.
+     */
+    public function destroy($id)
     {
-        abort_unless($timeCapsule->user_id === Auth::id(), 403);
+        $capsule = TimeCapsule::where('user_id', Auth::id())->findOrFail($id);
 
-        $timeCapsule->delete();
+        foreach ($capsule->artifacts as $artifact) {
+            if ($artifact->media_path) {
+                Storage::disk('public')->delete($artifact->media_path);
+            }
+        }
 
-        return redirect()->route('time-capsules.index');
+        $capsule->artifacts()->delete();
+        $capsule->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Capsule deleted successfully.',
+        ]);
     }
-
-    
 }

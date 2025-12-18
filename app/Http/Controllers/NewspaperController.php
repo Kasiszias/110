@@ -10,50 +10,74 @@ class NewspaperController extends Controller
     public function index(Request $request)
     {
         $data = $request->validate([
-            'state'      => 'required|string|size:2', // e.g. ny, ca
-            'year_from'  => 'required|integer|min:1700|max:2100',
-            'year_to'    => 'required|integer|min:1700|max:2100',
+            'year'  => 'required|integer|min:1850|max:2100',
+            'month' => 'required|integer|min:1|max:12',
         ]);
 
-        $state = strtolower($data['state']);
-        $yearFrom = $data['year_from'];
-        $yearTo   = $data['year_to'];
+        $year = $data['year'];
+        $month = str_pad($data['month'], 2, '0', STR_PAD_LEFT);
 
-        $response = Http::get('https://chroniclingamerica.loc.gov/search/titles/results/', [
-            'state'  => $state,
-            'year1'  => $yearFrom,
-            'year2'  => $yearTo,
-            'format' => 'json',
-        ]);
+        try {
 
-        if ($response->failed()) {
+            // Use NYTimes Archive API
+            $response = Http::timeout(10)
+                ->withOptions(['verify' => false]) // Skip SSL verification for development
+                ->get("https://api.nytimes.com/svc/archive/v1/{$year}/{$month}.json");
+
+            if ($response->successful()) {
+                $json = $response->json();
+                $articles = $json['response']['docs'] ?? [];
+                
+                // Transform articles to match expected format
+                $items = collect($articles)
+                    ->take(10)
+                    ->map(function ($article) {
+                        return [
+                            'title'      => $article['headline']['main'] ?? 'No Title',
+                            'description'=> $article['abstract'] ?? 'No description available',
+                            'date'       => $article['pub_date'] ?? null,
+                            'creator'    => implode(', ', $article['byline']['person'] ?? []),
+                            'url'        => $article['web_url'] ?? null,
+                            'type'       => 'news_article',
+                            'source'     => 'New York Times',
+                            'section'    => $article['section_name'] ?? null,
+                            'word_count' => $article['word_count'] ?? null,
+                        ];
+                    })
+                    ->values();
+
+                return response()->json([
+                    'year'  => $year,
+                    'month' => $month,
+                    'total' => count($articles),
+                    'newspapers' => $items,
+                    'source' => 'NYTimes Archive API',
+                    'success' => true,
+                ]);
+            }
+
             return response()->json([
-                'message' => 'Newspaper API unavailable',
+                'success' => false,
+                'message' => 'Unable to fetch data from NYTimes API',
+                'status' => $response->status(),
             ], 502);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Newspaper API error: ' . $e->getMessage(),
+                'error' => 'Failed to fetch historical news data from NYTimes Archive API'
+            ], 500);
         }
+    }
 
-        $json = $response->json();
-
-        $items = collect($json['items'] ?? [])
-            ->take(10)
-            ->map(function ($item) {
-                return [
-                    'title'      => $item['title'] ?? null,
-                    'place'      => $item['place_of_publication'] ?? null,
-                    'start_year' => $item['start_year'] ?? null,
-                    'end_year'   => $item['end_year'] ?? null,
-                    'lccn'       => $item['lccn'] ?? null,
-                    'url'        => $item['url'] ?? null,
-                ];
-            })
-            ->values();
-
-        return response()->json([
-            'state'      => $state,
-            'year_from'  => $yearFrom,
-            'year_to'    => $yearTo,
-            'total'      => $json['totalItems'] ?? null,
-            'newspapers' => $items,
+    public function show(Request $request, $year, $month)
+    {
+        $data = $request->validate([
+            'year'  => 'required|integer|min:1850|max:2100',
+            'month' => 'required|integer|min:1|max:12',
         ]);
+
+        return $this->index($request);
     }
 }

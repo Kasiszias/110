@@ -3,87 +3,77 @@
 namespace App\Http\Controllers;
 
 use App\Models\CapsuleArtifact;
-use App\Models\TimeCapsule;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\Validator;
 
 class CapsuleArtifactController extends Controller
 {
-    // Show one capsule + its artifacts
-    public function show(TimeCapsule $timeCapsule)
+    /**
+     * Store artifact
+     */
+    public function store(Request $request, $capsuleId)
     {
-        abort_unless($timeCapsule->user_id === Auth::id(), 403);
-
-        $timeCapsule->load(['artifacts' => function ($q) {
-            $q->orderBy('year', 'asc')->orderBy('layer_z_index', 'asc');
-        }]);
-
-        return Inertia::render('Capsules/Show', [
-            'capsule'   => $timeCapsule,
-            'artifacts' => $timeCapsule->artifacts,
+        $validator = Validator::make($request->all(), [
+            'type' => 'required|string',
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'year' => 'nullable|integer',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+
+            $artifact = CapsuleArtifact::create([
+                'capsule_id' => $capsuleId,
+                'title' => $request->title,
+                'content' => $request->content,
+                'artifact_type' => $request->type,
+                'year' => $request->year ?? date('Y'),
+                'media_path' => $request->file ?? null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Artifact added successfully',
+                'artifact' => $artifact
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add artifact',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    // Store new artifact
-    public function store(Request $request, TimeCapsule $timeCapsule)
+    /**
+     * Delete artifact
+     */
+    public function destroy($id)
     {
-        abort_unless($timeCapsule->user_id === Auth::id(), 403);
+        $artifact = CapsuleArtifact::with('capsule')->findOrFail($id);
 
-        $data = $request->validate([
-            'type'          => 'required|in:personal,historical,future',
-            'title'         => 'required|string|max:255',
-            'content'       => 'required|string',
-            'year'          => 'nullable|integer',
-            'layer_z_index' => 'nullable|integer',
-        ]);
 
-        CapsuleArtifact::create([
-            'capsule_id'    => $timeCapsule->id,
-            'type'          => $data['type'],
-            'title'         => $data['title'],
-            'content'       => $data['content'],
-            'year'          => $data['year'] ?? 0,
-            'metadata'      => [],
-            'layer_z_index' => $data['layer_z_index'] ?? 0,
-        ]);
-
-        return redirect()->route('capsules.show', $timeCapsule->id);
-    }
-
-    // Update artifact (NEW)
-    public function update(Request $request, TimeCapsule $timeCapsule, CapsuleArtifact $artifact)
-    {
-        abort_unless($timeCapsule->user_id === Auth::id(), 403);
-        abort_unless($artifact->capsule_id === $timeCapsule->id, 403);
-
-        $data = $request->validate([
-            'type'          => 'required|in:personal,historical,future',
-            'title'         => 'required|string|max:255',
-            'content'       => 'required|string',
-            'year'          => 'nullable|integer',
-            'layer_z_index' => 'nullable|integer',
-        ]);
-
-        $artifact->update([
-            'type'          => $data['type'],
-            'title'         => $data['title'],
-            'content'       => $data['content'],
-            'year'          => $data['year'] ?? 0,
-            'layer_z_index' => $data['layer_z_index'] ?? 0,
-        ]);
-
-        return redirect()->route('capsules.show', $timeCapsule->id);
-    }
-
-    // Delete artifact
-    public function destroy(TimeCapsule $timeCapsule, CapsuleArtifact $artifact)
-    {
-        abort_unless($timeCapsule->user_id === Auth::id(), 403);
-        abort_unless($artifact->capsule_id === $timeCapsule->id, 403);
+        // Check if user owns the capsule
+        if ($artifact->capsule->user_id !== \Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
 
         $artifact->delete();
 
-        return redirect()->route('capsules.show', $timeCapsule->id);
+        return response()->json([
+            'success' => true,
+            'message' => 'Artifact deleted successfully'
+        ]);
     }
 }

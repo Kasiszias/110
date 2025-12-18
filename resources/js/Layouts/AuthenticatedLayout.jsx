@@ -7,9 +7,7 @@ import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
-
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+    const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -29,6 +27,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     active={route().current('dashboard')}
                                 >
                                     Dashboard
+                                </NavLink>
+                                <NavLink
+                                    href={route('capsules.index')}
+                                    active={route().current('capsules.*')}
+                                >
+                                    My Capsules
                                 </NavLink>
                             </div>
                         </div>
@@ -61,9 +65,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                        >
+                                        <Dropdown.Link href={route('profile.edit')}>
                                             Profile
                                         </Dropdown.Link>
                                         <Dropdown.Link
@@ -133,6 +135,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('dashboard')}
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('capsules.index')}
+                            active={route().current('capsules.*')}
+                        >
+                            My Capsules
                         </ResponsiveNavLink>
                     </div>
 
